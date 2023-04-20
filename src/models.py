@@ -190,7 +190,7 @@ def _upsample(filters, size, apply_dropout=False):
 
 
 def Generator():
-    inputs = tf.keras.layers.Input(shape=[256, 256, 3])
+    inputs = tf.keras.layers.Input(shape=[None, None, 3])
 
     down_stack = [
         _downsample(64, 4, apply_batchnorm=False),  # (batch_size, 128, 128, 64)
