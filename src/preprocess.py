@@ -53,7 +53,7 @@ def main():
     Splits the image into 
     """
 
-    train_images_path = [os.path.join("data/train", x) for x in os.listdir("data/train")]
+    train_images_path = [os.path.join("data/train", x) for x in os.listdir("data/train") if "-" not in x]
     test_images_path = [os.path.join("data/test", x) for x in os.listdir("data/test")]
 
     # create a new directory to store the preprocessed images
