@@ -1,0 +1,17 @@
+name: tensorflow-gpu
+channels:
+  - rapidsai
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.10
+  - cudatoolkit=11.2
+  - jupyter
+  - matplotlib
+  - numpy
+  - pandas
+  - cudnn=8.1
+  - numba
+  - pillow
+  - pip:
+      - tensorflow-gpu==2.9.3
