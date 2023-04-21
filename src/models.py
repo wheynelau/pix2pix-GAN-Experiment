@@ -14,11 +14,12 @@ class TerminateOnNaNOrInf(tf.keras.callbacks.Callback):
             print('Batch %d: Invalid loss, terminating training' % (batch))
 
 class StepLearningRateOnEarlyStopping(tf.keras.callbacks.Callback):
-    def __init__(self, d_optimizer,factor=0.1):
+    def __init__(self, d_optimizer,factor=0.1, patience= 5):
         super().__init__()
         self.d_optimizer = d_optimizer
         self.factor = factor
-        
+        self.patience = patience
+        self.wait = 0
     def on_train_end(self, logs=None):
         # Early stopping changes the model.stop_training
         # This does not activate the callback when the model stops training due to epoch
@@ -27,7 +28,12 @@ class StepLearningRateOnEarlyStopping(tf.keras.callbacks.Callback):
             new_d_lr = d_lr * self.factor
             tf.keras.backend.set_value(self.d_optimizer.lr, new_d_lr)
             print(f"Learning rate stepped down. Discriminator LR: {new_d_lr}")
-
+            self.wait += 1
+    @property
+    def stop(self):
+        return self.wait >= self.patience
+    
+    
 def generate_for_callback(model:tf.keras.Model, test_input:np.ndarray, tar:np.ndarray,writer:tf.summary.SummaryWriter):
     """
     Generates the function for the callback to use.
