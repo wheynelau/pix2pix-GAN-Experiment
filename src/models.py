@@ -364,17 +364,17 @@ def Discriminator():
 class GAN(tf.keras.Model):
     def __init__(self, generator, discriminator):
         super().__init__()
-        self.discriminator = discriminator
         self.generator = generator
+        self.discriminator = discriminator
         self.d_loss_tracker = tf.keras.metrics.Mean(name="d_loss")
         self.g_loss_tracker = tf.keras.metrics.Mean(name="g_loss")
         self.gen_gan_loss_tracker = tf.keras.metrics.Mean(name="gen_gan_loss")
         self.gen_l1_loss_tracker = tf.keras.metrics.Mean(name="gen_l1_loss")
 
-    def compile(self, d_optimizer, g_optimizer, loss_fn):
+    def compile(self, g_optimizer, d_optimizer, loss_fn):
         super().compile()
-        self.d_optimizer = d_optimizer
         self.g_optimizer = g_optimizer
+        self.d_optimizer = d_optimizer
         self.loss_fn = loss_fn
 
     def train_step(self, input):

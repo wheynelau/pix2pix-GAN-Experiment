@@ -110,11 +110,11 @@ discriminator = Discriminator()
 
 # Create the optimizers
 generator_optimizer = tf.keras.optimizers.Adam(args.learning_rate, beta_1=0.6)
-discriminator_optimizer = tf.keras.optimizers.Adam(args.learning_rate/2, beta_1=0.6)
+discriminator_optimizer = tf.keras.optimizers.Adam(args.learning_rate, beta_1=0.6)
 
 loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)
-gan = GAN(generator, discriminator)
-gan.compile(generator_optimizer, discriminator_optimizer,loss_object)
+gan = GAN(generator = generator, discriminator = discriminator)
+gan.compile(g_optimizer = generator_optimizer, d_optimizer = discriminator_optimizer,loss_fn = loss_object)
 
 os.makedirs("logs", exist_ok=True)
 os.makedirs("training_checkpoints", exist_ok=True)
@@ -159,7 +159,7 @@ def main():
                                                         write_graph=False,)
 
     es_callback = tf.keras.callbacks.EarlyStopping(monitor='gen_gan_loss', restore_best_weights=True,
-                                                    mode='min', baseline=100, verbose=1, patience=10)
+                                                    mode='min', baseline=100, verbose=1, patience=20)
 
     lr_scheduler_d = StepLearningRateOnEarlyStopping(discriminator_optimizer, factor= DOWN_FACTOR)
 
