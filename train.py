@@ -61,6 +61,7 @@ parser.add_argument(
     default=0.1,
     help="Downsampling factor to use for the discriminator",
 )
+
 parser.add_argument(
     "--width",
     "-wt",
@@ -158,10 +159,10 @@ def main():
     tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir,
                                                         write_graph=False,)
 
-    es_callback = tf.keras.callbacks.EarlyStopping(monitor='gen_gan_loss', restore_best_weights=True,
-                                                    mode='min', baseline=100, verbose=1, patience=20)
+    es_callback = tf.keras.callbacks.EarlyStopping(monitor='g_loss',
+                                                    mode='min', baseline=100, verbose=1, patience=50)
 
-    lr_scheduler_d = StepLearningRateOnEarlyStopping(discriminator_optimizer, factor= DOWN_FACTOR)
+    lr_scheduler_d = StepLearningRateOnEarlyStopping(discriminator_optimizer, factor= DOWN_FACTOR, patience = 20)
 
     #### TRAINING LOOP ####
     start = time.time()
@@ -183,9 +184,13 @@ def main():
             #terminate
             ],
         )
+        # Generate images on tensorboard and clear the session
         utils.generate_images_tensorboard(gan, example_input, example_target, tf_summary, i)
         gc.collect()
         tf.keras.backend.clear_session()
+        if lr_scheduler_d.stop:
+            print("Early stopping after 10 runs of downfactor")
+            break
 
     # Save the model
     gen = gan.generator
