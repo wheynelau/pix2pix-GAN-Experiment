@@ -13,6 +13,13 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 # Define the command line arguments
 parser = argparse.ArgumentParser()
 parser.add_argument(
+    "--verbose",
+    "-vb",
+    type=int,
+    default=0,
+    help="Verbose output during training",
+)
+parser.add_argument(
     "--epochs",
     "-e",
     type=int,
@@ -46,6 +53,13 @@ parser.add_argument(
     type=float,
     default=0.0002,
     help="Learning rate to use for training",
+)
+parser.add_argument(
+    "--down_factor",
+    "-df",
+    type=float,
+    default=0.1,
+    help="Downsampling factor to use for the discriminator",
 )
 parser.add_argument(
     "--width",
@@ -84,6 +98,7 @@ IMG_HEIGHT = args.height
 STEPS = args.steps
 NUM_RUNS = args.runs
 EPOCHS = args.epochs
+DOWN_FACTOR = args.down_factor
 utils = TFUtils(args.vgg)
 
 # Create the generator and discriminator
@@ -94,8 +109,8 @@ generator = Generator()
 discriminator = Discriminator()
 
 # Create the optimizers
-generator_optimizer = tf.keras.optimizers.Adam(args.learning_rate, beta_1=0.5)
-discriminator_optimizer = tf.keras.optimizers.Adam(args.learning_rate, beta_1=0.5)
+generator_optimizer = tf.keras.optimizers.Adam(args.learning_rate, beta_1=0.6)
+discriminator_optimizer = tf.keras.optimizers.Adam(args.learning_rate/2, beta_1=0.6)
 
 loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 gan = GAN(generator, discriminator)
@@ -119,6 +134,7 @@ if args.load:
         time_now = str(datetime.datetime.now().strftime("%Y%m%d-%H%M"))
 else:
     time_now = str(datetime.datetime.now().strftime("%Y%m%d-%H%M"))
+    log_dir = os.path.join("logs", time_now)
 
 ckpt_dir = os.path.join("./training_checkpoints",str(datetime.datetime.now().strftime("%Y%m%d-%H%M")), "ckpt")
 print("New model will be saved to: ", ckpt_dir)
@@ -140,12 +156,12 @@ def main():
     tf_summary = tf.summary.create_file_writer(os.path.join(log_dir,'images'))
 
     tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir,
-                                                        write_graph=False,
-                                                        profile_batch=(100,120))
+                                                        write_graph=False,)
 
-    es_callback = tf.keras.callbacks.EarlyStopping(monitor='gen_gan_loss', mode='min', baseline=100, verbose=1, patience=5)
+    es_callback = tf.keras.callbacks.EarlyStopping(monitor='gen_gan_loss', restore_best_weights=True,
+                                                    mode='min', baseline=100, verbose=1, patience=10)
 
-    #terminate = TerminateOnNaNOrInf(monitor= 'gen_gan_loss')
+    lr_scheduler_d = StepLearningRateOnEarlyStopping(discriminator_optimizer, factor= DOWN_FACTOR)
 
     #### TRAINING LOOP ####
     start = time.time()
@@ -159,16 +175,22 @@ def main():
             epochs=EPOCHS,
             steps_per_epoch=STEPS,
             use_multiprocessing=True,
+            verbose = args.verbose,
             callbacks=[checkpoint_callback, 
             tensorboard_callback, 
             es_callback,
+            lr_scheduler_d,
             #terminate
             ],
         )
         utils.generate_images_tensorboard(gan, example_input, example_target, tf_summary, i)
         gc.collect()
-        os.system("cls")
-        os.system("clear")
+        tf.keras.backend.clear_session()
+
+    # Save the model
+    gen = gan.generator
+    gen.save(os.path.join("models", time_now, "generator.h5"))
+
 
 
 if __name__ == "__main__":
