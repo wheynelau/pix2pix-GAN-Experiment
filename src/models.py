@@ -1,6 +1,7 @@
 from tensorflow.keras.applications.vgg19 import VGG19
 import math
 import tensorflow as tf
+import numpy as np
 
 class TerminateOnNaNOrInf(tf.keras.callbacks.Callback):
 
@@ -11,6 +12,91 @@ class TerminateOnNaNOrInf(tf.keras.callbacks.Callback):
         if math.isnan(logs[self.monitor]) or math.isinf(logs[self.monitor]):
             self.model.stop_training = True
             print('Batch %d: Invalid loss, terminating training' % (batch))
+
+class StepLearningRateOnEarlyStopping(tf.keras.callbacks.Callback):
+    def __init__(self, d_optimizer,factor=0.1):
+        super().__init__()
+        self.d_optimizer = d_optimizer
+        self.factor = factor
+        
+    def on_train_end(self, logs=None):
+        # Early stopping changes the model.stop_training
+        # This does not activate the callback when the model stops training due to epoch
+        if self.model.stop_training:
+            d_lr = self.d_optimizer.lr.numpy()
+            new_d_lr = d_lr * self.factor
+            tf.keras.backend.set_value(self.d_optimizer.lr, new_d_lr)
+            print(f"Learning rate stepped down. Discriminator LR: {new_d_lr}")
+
+def generate_for_callback(model:tf.keras.Model, test_input:np.ndarray, tar:np.ndarray,writer:tf.summary.SummaryWriter):
+    """
+    Generates the function for the callback to use.
+
+    Parameters
+    ----------
+    model :
+        _description_
+    test_input : _type_
+        _description_
+    tar : _type_
+        _description_
+    writer : _type_
+        _description_
+    """
+    def generate_images_tensorboard(epoch,logs=None):
+        if epoch % 100 != 0:
+            # Experiment in context manager
+            with writer.as_default():
+                prediction = model(test_input, training=True)
+                display_list = [test_input[0], tar[0], prediction[0]]
+                display_list = [tf.image.convert_image_dtype(x, tf.float64) for x in display_list]
+                display_list = [x* 0.5 + 0.5 for x in display_list]
+                titles = ["Input Image", "Ground Truth", "Predicted Image"]
+                tf.summary.image(' '.join(titles), display_list, step=epoch, max_outputs=6)
+                writer.flush()
+        if epoch % 1000 == 0 and epoch != 0:
+            tf.keras.backend.clear_session()
+        
+    return lambda epoch, logs: generate_images_tensorboard(epoch, logs)
+
+import tensorflow as tf
+import datetime
+
+class ImageCallback(tf.keras.callbacks.Callback):
+    def __init__(self, generator:tf.keras.Model, log_dir:str, test_input:np.ndarray, test_target:np.ndarray):
+        super(ImageCallback, self).__init__()
+        self.generator = generator
+        self.log_dir = log_dir
+        self.file_writer = tf.summary.create_file_writer(self.log_dir)
+        self.test_input = test_input
+        self.test_target = test_target
+
+    def on_epoch_end(self, epoch, logs=None):
+        if epoch % 100 == 0:
+            with self.file_writer.as_default():
+                # Generate images using the generator model
+                prediction = self.generator.predict(self.test_input)
+
+                # Create a grid of 4x4 images
+                display_list = [self.test_input[0], self.test_target[0], prediction[0]]
+                display_list = [tf.image.convert_image_dtype(x, tf.float64) for x in display_list]
+                display_list = [x* 0.5 + 0.5 for x in display_list]
+                titles = ["Input Image", "Ground Truth", "Predicted Image"]
+
+                # Log the generated image to TensorBoard
+                with self.file_writer.as_default():
+                    tf.summary.image(' '.join(titles), display_list, step=epoch, max_outputs=6)
+                self.file_writer.flush()
+
+                # Flush the summary writer
+                self.file_writer.flush()
+                self.image_count += 1
+
+        # Clear the session to free up memory
+        if epoch % 1000 == 0 and epoch != 0:
+            tf.keras.backend.clear_session()
+
+
 
 def VGG19Generator(num_classes=3, trainable=False):
     # Load VGG19 model pretrained on ImageNet without the top layers
@@ -331,7 +417,7 @@ class GAN(tf.keras.Model):
             "gen_l1_loss": self.gen_l1_loss_tracker.result(),
         }
 
-    def generator_loss(self, disc_generated_output, gen_output, target, LAMBDA=100):
+    def generator_loss(self, disc_generated_output, gen_output, target, LAMBDA=50):
         gan_loss = self.loss_fn(
             tf.ones_like(disc_generated_output), disc_generated_output
         )
