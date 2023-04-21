@@ -21,6 +21,7 @@
 - Experiment with cloud computing resources
 - Implement a GAN model with tensorflow
 - Use pretrained models as a discriminator and generator
+- Create a training pipeline for GAN models
 
 # Pre-requisites
 
@@ -127,6 +128,9 @@ Tensorboard results can be found [here](https://tensorboard.dev/experiment/gk65v
    - Hypothesis: Generate images that are realistic but not similar to the original images
 3. Implement hydra for configuration management
 4. Fine tune a pretrained generator and discriminator
+5. Increase customisability of the training pipeline
+   - Use custom file names : currently the file names are hardcoded, such as preprocessed/train/image and preprocessed/train/mask
+   - Add more options for the loss function
 
 # Contributing
 
