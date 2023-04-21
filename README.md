@@ -1,23 +1,28 @@
-# UNET GAN with pretrained VGG19 as a discriminator and generator
+# UNET GAN
 
 # Table Of Contents
-- [UNET GAN with pretrained VGG19 as a discriminator and generator](#unet-gan-with-pretrained-vgg19-as-a-discriminator-and-generator)
+- [UNET GAN](#unet-gan)
 - [Table Of Contents](#table-of-contents)
-  - [Motivation and goals](#motivation-and-goals)
-  - [Pre-requisites](#pre-requisites)
+- [Motivation and goals](#motivation-and-goals)
+- [Pre-requisites](#pre-requisites)
 - [Getting started](#getting-started)
-- [In Details](#in-details)
-- [Future Work](#future-work)
+- [Training](#training)
+- [Inferencing](#inferencing)
+- [Results](#results)
+- [Problems](#problems)
+- [Learning points](#learning-points)
+- [Future enhancements / TODO](#future-enhancements--todo)
 - [Contributing](#contributing)
-- [Acknowledgments](#acknowledgments)
+- [Sources](#sources)
 
-## Motivation and goals
+# Motivation and goals
 
 - Explore the use cases of GAN
 - Experiment with cloud computing resources
 - Implement a GAN model with tensorflow
+- Use pretrained models as a discriminator and generator
 
-## Pre-requisites
+# Pre-requisites
 
 Tensorflow was built from source using the following configuration:
 
@@ -28,10 +33,10 @@ cudatoolkit=11.2
 cudnn=8.1
 ```
 
-A conda environment file will be provided in the root directory of this repository when it is done.
+A conda environment file will be provided in the root directory of this repository. It was only tested on a windows machine.
 
 # Getting started
-If you want to use this template for your project, you need to follow these steps:
+If you want to use this project, follow these steps:
 
 1. Clone this repository
 
@@ -43,108 +48,117 @@ git clone https://github.com/wheynelau/VGG19-gan-experiment.git
 ```bash
 conda env create -f environment.yml
 ```
-3. 
+3. Setup the folders and files
 
-   
-- In `engine`  folder create a model trainer function and inference function. In trainer function, you need to write the logic of the training process, you can use some third-party library to decrease the repeated stuff.
+If your image is in the format of two images combined together, you can use the 'preprocess.py' file to split them into two images. 
 
-```python
-# trainer
-def do_train(cfg, model, train_loader, val_loader, optimizer, scheduler, loss_fn):
- """
- implement the logic of epoch:
- -loop on the number of iterations in the config and call the train step
- -add any summaries you want using the summary
- """
-pass
+Here is an example of the image:
 
-# inference
-def inference(cfg, model, val_loader):
-"""
-implement the logic of the train step
-- run the tensorflow session
-- return any metrics you need to summarize
- """
-pass
+<img src ="images/sample.png" title='Sample' width="50%">
+
+Your directory should look like this:
+
+```bash
+python src/preprocess.py
+├───data
+│   ├───mask
+│   ├───test
+│   └───train
 ```
 
-- In `tools`  folder, you create the `train.py` .  In this file, you need to get the instances of the following objects "Model",  "DataLoader”, “Optimizer”, and config
-```python
-# create instance of the model you want
-model = build_model(cfg)
+Running the 'preprocess.py' file will create a new directory called 'preprocessed' and split the images into two images. This is how it would appear:
 
-# create your data generator
-train_loader = make_data_loader(cfg, is_train=True)
-val_loader = make_data_loader(cfg, is_train=False)
-
-# create your model optimizer
-optimizer = make_optimizer(cfg, model)
+```bash
+├───preprocessed
+│   ├───test
+│   │   ├───image
+│   │   └───mask
+│   └───train
+│       ├───image
+│       └───mask
 ```
+# Training
 
-- Pass the all these objects to the function `do_train` , and start your training
-```python
-# here you train your model
-do_train(cfg, model, train_loader, val_loader, optimizer, None, F.cross_entropy)
+```bash
+$ python train.py --help
+usage: train.py [-h] [--verbose VERBOSE] [--epochs EPOCHS] [--steps STEPS] [--runs RUNS]
+                [--batch_size BATCH_SIZE] [--learning_rate LEARNING_RATE] [--down_factor DOWN_FACTOR]        
+                [--width WIDTH] [--height HEIGHT] [--load] [--vgg]
+optional arguments:
+  -h, --help            show this help message and exit
+  --verbose VERBOSE, -vb VERBOSE
+                        Verbose output during training
+  --epochs EPOCHS, -e EPOCHS
+                        Number of epochs to train the model for
+  --steps STEPS, -s STEPS
+                        Number of steps per epoch to train the model for
+  --runs RUNS, -r RUNS  Number of runs to train the model for
+  --batch_size BATCH_SIZE, -b BATCH_SIZE
+                        Batch size to use for training
+  --learning_rate LEARNING_RATE, -lr LEARNING_RATE
+                        Learning rate to use for training
+  --down_factor DOWN_FACTOR, -df DOWN_FACTOR
+                        Downsampling factor to use for the discriminator
+  --width WIDTH, -wt WIDTH
+                        Width of the images to use for training
+  --height HEIGHT, -ht HEIGHT
+                        Height of the images to use for training
+  --load, -l            Load the latest checkpoint and continue training
+  --vgg, -vgg           Use VGG models
 ```
+Note: VGG was not trained
 
-**You will find a template file and a simple example in the model and trainer folder that shows you how to try your first model simply.**
+# Inferencing
 
+At the end of train.py, I've added a statement to save the generator of the GAN model.
+This is the generator that will be used for inferencing.
 
-# In Details
+```bash
+$ python infer.py --help
+usage: infer.py [-h] [--cpu] [--concat] image_path output_path
+
+Inference on an image using a saved TensorFlow model.
+
+positional arguments:
+  image_path   path to the input folder
+  output_path  path to the model folder
+
+options:
+  -h, --help   show this help message and exit
+  --cpu        use CPU instead of GPU
+  --concat     concatenate the input and output images
 ```
-├──  config
-│    └── defaults.py  - here's the default config file.
-│
-│
-├──  configs  
-│    └── train_mnist_softmax.yml  - here's the specific config file for specific model or dataset.
-│ 
-│
-├──  data  
-│    └── datasets  - here's the datasets folder that is responsible for all data handling.
-│    └── transforms  - here's the data preprocess folder that is responsible for all data augmentation.
-│    └── build.py  		   - here's the file to make dataloader.
-│    └── collate_batch.py   - here's the file that is responsible for merges a list of samples to form a mini-batch.
-│
-│
-├──  engine
-│   ├── trainer.py     - this file contains the train loops.
-│   └── inference.py   - this file contains the inference process.
-│
-│
-├── layers              - this folder contains any customed layers of your project.
-│   └── conv_layer.py
-│
-│
-├── modeling            - this folder contains any model of your project.
-│   └── example_model.py
-│
-│
-├── solver             - this folder contains optimizer of your project.
-│   └── build.py
-│   └── lr_scheduler.py
-│   
-│ 
-├──  tools                - here's the train/test model of your project.
-│    └── train_net.py  - here's an example of train model that is responsible for the whole pipeline.
-│ 
-│ 
-└── utils
-│    ├── logger.py
-│    └── any_other_utils_you_need
-│ 
-│ 
-└── tests					- this foler contains unit test of your project.
-     ├── test_data_sampler.py
-```
+# Results
 
+Tensorboard results can be found [here](https://tensorboard.dev/experiment/gk65vsEQQDuOCeGJv2Yt1A/)
 
-# Future Work
+1. The generator was able to generate rather realistic images however they were incomplete. They looked similar to incomplete paintings.
+2. Despite not having colour information, the generator was able to generate images with similar colours to the original images.
+  - This could mean that the generator was able to learn the colour information from the features
+
+# Problems
+1. VGG implementation was not successful, leading to inf loss on the generator
+   - Suspected that the discriminator was overpowering the generator
+
+# Learning points
+1. GANs are hard to train
+2. It is difficult to tune the learning rates for the generator and discriminator
+3. Successfully implemented custom callbacks for Tensorboard and checkpointing
+4. Created a callback to adjust the learning rate of the generator and discriminator
+# Future enhancements / TODO
+
+1. Implement a mix of pretrained models for the discriminator and generator
+   - Using VGG for generator and using a custom discriminator vice versa
+2. Experiment with different lambda values for the loss function
+   - Hypothesis: Generate images that are realistic but not similar to the original images
+3. Implement hydra for configuration management
+4. Fine tune a pretrained generator and discriminator
 
 # Contributing
+
 Any kind of enhancement or contribution is welcomed.
 
+# Sources 
 
-# Acknowledgments
-
+[pix2pix](https://www.tensorflow.org/tutorials/generative/pix2pix)
 
