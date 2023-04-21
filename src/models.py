@@ -376,6 +376,16 @@ class GAN(tf.keras.Model):
         self.g_loss_tracker = tf.keras.metrics.Mean(name="g_loss")
         self.gen_gan_loss_tracker = tf.keras.metrics.Mean(name="gen_gan_loss")
         self.gen_l1_loss_tracker = tf.keras.metrics.Mean(name="gen_l1_loss")
+        self.perceptual_loss_tracker = tf.keras.metrics.Mean(name="perceptual_loss")
+        self.vgg = self.builds_vgg()
+        self.vgg.trainable = False
+
+    def builds_vgg(self):
+        vgg = tf.keras.applications.VGG19(include_top=False, weights="imagenet")
+        vgg.trainable = False
+        outputs = [vgg.get_layer(name).output for name in ["block1_conv2", "block2_conv2", "block3_conv4", "block4_conv4"]]
+        model = tf.keras.Model([vgg.input], outputs)
+        return model
 
     def compile(self, g_optimizer, d_optimizer, loss_fn):
         super().compile()
@@ -393,15 +403,18 @@ class GAN(tf.keras.Model):
                 [input_image, gen_output], training=True
             )
 
+            gen_perceptual_loss = self.perceptual_loss(target = target, generated = gen_output)
+
             g_loss, gen_gan_loss, gen_l1_loss = self.generator_loss(
                 disc_generated_output, gen_output, target
             )
+            g_loss = g_loss + gen_perceptual_loss
             d_loss = self.discriminator_loss(disc_real_output, disc_generated_output)
 
         generator_gradients = gen_tape.gradient(
             g_loss, self.generator.trainable_variables
         )
-        discriminator_gradients = disc_tape.gradient(
+        discriminator_gradients = disc_tape.gradient( 
             d_loss, self.discriminator.trainable_variables
         )
 
@@ -421,6 +434,7 @@ class GAN(tf.keras.Model):
             "g_loss": self.g_loss_tracker.result(),
             "gen_gan_loss": self.gen_gan_loss_tracker.result(),
             "gen_l1_loss": self.gen_l1_loss_tracker.result(),
+            "perceptual_loss": self.perceptual_loss_tracker.result(),
         }
 
     def generator_loss(self, disc_generated_output, gen_output, target, LAMBDA=50):
@@ -447,6 +461,19 @@ class GAN(tf.keras.Model):
         total_disc_loss = real_loss + generated_loss
 
         return total_disc_loss
+    
+    def perceptual_loss(self, target, generated):
+        # Get the VGG-19 features for the target and generated images
+        target_features = self.vgg(target)
+        generated_features = self.vgg(generated)
+        
+        # Compute the mean squared error between the target and generated features
+        loss = 0
+        for t, g in zip(target_features, generated_features):
+            loss += tf.reduce_mean(tf.square(t - g))
+        loss /= len(target_features)
+        
+        return loss
 
     def call(self, inputs, training=None, mask=None):
         return self.generator(inputs, training=training)
