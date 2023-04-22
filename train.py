@@ -106,7 +106,7 @@ utils = TFUtils(args.vgg)
 train_generator, validation_generator = utils.create_datagenerators(
     IMG_HEIGHT, IMG_WIDTH, BATCH_SIZE
 )
-generator = Generator()
+generator = VGG19Generator()
 discriminator = Discriminator()
 
 # Create the optimizers
@@ -159,10 +159,10 @@ def main():
     tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir,
                                                         write_graph=False,)
 
-    es_callback = tf.keras.callbacks.EarlyStopping(monitor='g_loss',
+    es_callback = tf.keras.callbacks.EarlyStopping(monitor='g_loss', restore_best_weights=True,
                                                     mode='min', baseline=100, verbose=1, patience=50)
 
-    lr_scheduler_d = StepLearningRateOnEarlyStopping(discriminator_optimizer, factor= DOWN_FACTOR, patience = 20)
+    lr_scheduler_d = StepLearningRateOnEarlyStopping(discriminator_optimizer, factor= DOWN_FACTOR, patience = 10)
 
     #### TRAINING LOOP ####
     start = time.time()

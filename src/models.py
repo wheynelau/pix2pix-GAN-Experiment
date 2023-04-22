@@ -135,7 +135,7 @@ def VGG19Generator(num_classes=3, trainable=False):
     up_concat3 = tf.keras.layers.concatenate([up_conv3, block1])  # (256 x 256 x 128)
 
     # Output layer
-    output_layer = tf.keras.layers.Conv2D(num_classes, 1, activation="tanh")(
+    output_layer = tf.keras.layers.Conv2D(num_classes, 1, activation="sigmoid")(
         up_concat3
     )  # (256 x 256 x num_classes)
 
@@ -312,7 +312,7 @@ def Generator():
         strides=2,
         kernel_initializer=initializer,
         padding="same",
-        activation="tanh",
+        activation="sigmoid",
     )  # (batch_size, 256, 256, 3)
 
     x = inputs
@@ -383,7 +383,7 @@ class GAN(tf.keras.Model):
     def builds_vgg(self):
         vgg = tf.keras.applications.VGG19(include_top=False, weights="imagenet")
         vgg.trainable = False
-        outputs = [vgg.get_layer(name).output for name in ["block1_conv2", "block2_conv2", "block3_conv4", "block4_conv4"]]
+        outputs = [vgg.get_layer(name).output for name in ["block1_conv2", "block2_conv2"]]
         model = tf.keras.Model([vgg.input], outputs)
         return model
 
@@ -429,6 +429,7 @@ class GAN(tf.keras.Model):
         self.g_loss_tracker.update_state(g_loss)
         self.gen_gan_loss_tracker.update_state(gen_gan_loss)
         self.gen_l1_loss_tracker.update_state(gen_l1_loss)
+        self.perceptual_loss_tracker.update_state(gen_perceptual_loss)
         return {
             "d_loss": self.d_loss_tracker.result(),
             "g_loss": self.g_loss_tracker.result(),
@@ -473,7 +474,7 @@ class GAN(tf.keras.Model):
             loss += tf.reduce_mean(tf.square(t - g))
         loss /= len(target_features)
         
-        return loss
+        return tf.cast(loss, tf.float32)
 
     def call(self, inputs, training=None, mask=None):
         return self.generator(inputs, training=training)

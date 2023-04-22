@@ -10,6 +10,7 @@ class TFUtils:
     def preprocessor(self,img):
             if self.vgg:
                 img = tf.keras.applications.vgg19.preprocess_input(img)
+                img = img /255
             else:
                 img = img/127.5 - 1
             return img
@@ -92,16 +93,39 @@ class TFUtils:
             plt.axis("off")
         plt.show()
 
-    @staticmethod
-    def generate_images_tensorboard(model, test_input, tar,writer,step):
+    def generate_images_tensorboard(self,model, test_input, tar,writer,step):
         prediction = model(test_input, training=True)
         plt.figure(figsize=(15, 15))
 
         display_list = [test_input[0], tar[0], prediction[0]]
         display_list = [tf.image.convert_image_dtype(x, tf.float64) for x in display_list]
-        display_list = [x* 0.5 + 0.5 for x in display_list]
+        if self.vgg:
+            display_list = [self.reverse_preprocessor(x) for x in display_list]
+        else:
+            display_list = [x* 0.5 + 0.5 for x in display_list]
         titles = ["Input Image", "Ground Truth", "Predicted Image"]
         
         with writer.as_default():
             tf.summary.image(' '.join(titles), display_list, step=step, max_outputs=6)
         writer.flush()
+
+    @staticmethod
+    def reverse_preprocessor(input_image):
+        # Reverse the scaling step
+        input_image = (input_image + 1.0) / 2.0
+        
+        # Reverse the channel-wise mean subtraction
+        vgg_mean = tf.constant([103.939, 116.779, 123.68], dtype=tf.float32)
+        input_image =  tf.cast(input_image, dtype= tf.float32)
+        input_image = (input_image * 255.0) - vgg_mean
+        
+        # Convert from BGR to RGB
+        input_image = input_image[..., ::-1]
+        
+        # Clip the pixel values to the [0, 255] range
+        input_image = tf.clip_by_value(input_image, 0, 255)
+        
+        # Convert to uint8 data type
+        input_image = tf.cast(input_image, tf.uint8)
+        
+        return input_image
