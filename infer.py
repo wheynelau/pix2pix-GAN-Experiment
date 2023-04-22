@@ -4,13 +4,16 @@ from PIL import Image
 import os
 import numpy
 from tqdm import tqdm
+import sys
 
 parser = argparse.ArgumentParser(description='Inference on an image using a saved TensorFlow model.')
 parser.add_argument('image_path', type=str, help='path to the input folder')
 parser.add_argument('output_path', type=str, help='path to the model folder')
+
 # Testing function
-parser.add_argument('--cpu', action='store_true', help='use CPU instead of GPU')
-parser.add_argument('--concat', action='store_true', help='concatenate the input and output images')
+parser.add_argument('-cpu', action='store_true', help='use CPU instead of GPU')
+parser.add_argument('-concat', action='store_true', help='concatenate the input and output images')
+parser.add_argument('--model_path', type=str, help='path to the model folder, if None use latest time-stamped models',default=None)
 args = parser.parse_args()
 
 if args.cpu:
@@ -23,13 +26,21 @@ if not os.path.exists(args.image_path):
 if not os.path.exists(args.output_path):
     os.makedirs(args.output_path, exist_ok=True)
 
+if args.model_path:
+    model_path = os.path.join(args.model_path, 'generator.h5')
+
+else:
+    model_folder = os.listdir('models')
+    model_path = os.path.join('models', max(model_folder, key=os.path.getctime), 'generator.h5')
 model = Generator()
-model.load_weights('models/generator.h5')
+model.load_weights(model_path)
 
 images = [os.path.join(args.image_path, x) for x in os.listdir(args.image_path)]
 
 for image in tqdm(images):
     input = Image.open(image)
+    input = input.convert('RGB')
+    
     if input.size != (256, 256):
         print("Image size is not 256x256. Performance may be affected.")
 
