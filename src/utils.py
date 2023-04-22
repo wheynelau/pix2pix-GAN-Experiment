@@ -9,7 +9,6 @@ class TFUtils:
 
     def preprocessor(self,img):
             if self.vgg:
-                img = tf.keras.applications.vgg19.preprocess_input(img)
                 img = img /255
             else:
                 img = img/127.5 - 1
@@ -100,7 +99,7 @@ class TFUtils:
         display_list = [test_input[0], tar[0], prediction[0]]
         display_list = [tf.image.convert_image_dtype(x, tf.float64) for x in display_list]
         if self.vgg:
-            display_list = [self.reverse_preprocessor(x) for x in display_list]
+            display_list = [self.reversev2(x) for x in display_list]
         else:
             display_list = [x* 0.5 + 0.5 for x in display_list]
         titles = ["Input Image", "Ground Truth", "Predicted Image"]
@@ -129,3 +128,11 @@ class TFUtils:
         input_image = tf.cast(input_image, tf.uint8)
         
         return input_image
+
+    @staticmethod
+    def reversev2(input_image):
+
+        input_image *= 255
+        input_image = tf.clip_by_value(input_image, 0, 255)
+
+        return tf.cast(input_image, tf.uint8)
