@@ -4,23 +4,26 @@ import tensorflow as tf
 import numpy as np
 import datetime
 
-class TerminateOnNaNOrInf(tf.keras.callbacks.Callback):
 
-    def __init__(self, monitor = 'loss'):
+class TerminateOnNaNOrInf(tf.keras.callbacks.Callback):
+    def __init__(self, monitor="loss"):
         super().__init__()
         self.monitor = monitor
+
     def on_batch_end(self, batch, logs=None):
         if math.isnan(logs[self.monitor]) or math.isinf(logs[self.monitor]):
             self.model.stop_training = True
-            print('Batch %d: Invalid loss, terminating training' % (batch))
+            print("Batch %d: Invalid loss, terminating training" % (batch))
+
 
 class StepLearningRateOnEarlyStopping(tf.keras.callbacks.Callback):
-    def __init__(self, d_optimizer,factor=0.1, patience= 5):
+    def __init__(self, d_optimizer, factor=0.1, patience=5):
         super().__init__()
         self.d_optimizer = d_optimizer
         self.factor = factor
         self.patience = patience
         self.wait = 0
+
     def on_train_end(self, logs=None):
         # Early stopping changes the model.stop_training
         # This does not activate the callback when the model stops training due to epoch
@@ -30,12 +33,18 @@ class StepLearningRateOnEarlyStopping(tf.keras.callbacks.Callback):
             tf.keras.backend.set_value(self.d_optimizer.lr, new_d_lr)
             print(f"Learning rate stepped down. Discriminator LR: {new_d_lr}")
             self.wait += 1
+
     @property
     def stop(self):
         return self.wait >= self.patience
-    
-    
-def generate_for_callback(model:tf.keras.Model, test_input:np.ndarray, tar:np.ndarray,writer:tf.summary.SummaryWriter):
+
+
+def generate_for_callback(
+    model: tf.keras.Model,
+    test_input: np.ndarray,
+    tar: np.ndarray,
+    writer: tf.summary.SummaryWriter,
+):
     """
     Generates the function for the callback to use.
 
@@ -50,24 +59,36 @@ def generate_for_callback(model:tf.keras.Model, test_input:np.ndarray, tar:np.nd
     writer : _type_
         _description_
     """
-    def generate_images_tensorboard(epoch,logs=None):
+
+    def generate_images_tensorboard(epoch, logs=None):
         if epoch % 100 != 0:
             # Experiment in context manager
             with writer.as_default():
                 prediction = model(test_input, training=True)
                 display_list = [test_input[0], tar[0], prediction[0]]
-                display_list = [tf.image.convert_image_dtype(x, tf.float64) for x in display_list]
-                display_list = [x* 0.5 + 0.5 for x in display_list]
+                display_list = [
+                    tf.image.convert_image_dtype(x, tf.float64) for x in display_list
+                ]
+                display_list = [x * 0.5 + 0.5 for x in display_list]
                 titles = ["Input Image", "Ground Truth", "Predicted Image"]
-                tf.summary.image(' '.join(titles), display_list, step=epoch, max_outputs=6)
+                tf.summary.image(
+                    " ".join(titles), display_list, step=epoch, max_outputs=6
+                )
                 writer.flush()
         if epoch % 1000 == 0 and epoch != 0:
             tf.keras.backend.clear_session()
-        
+
     return lambda epoch, logs: generate_images_tensorboard(epoch, logs)
 
+
 class ImageCallback(tf.keras.callbacks.Callback):
-    def __init__(self, generator:tf.keras.Model, log_dir:str, test_input:np.ndarray, test_target:np.ndarray):
+    def __init__(
+        self,
+        generator: tf.keras.Model,
+        log_dir: str,
+        test_input: np.ndarray,
+        test_target: np.ndarray,
+    ):
         super(ImageCallback, self).__init__()
         self.generator = generator
         self.log_dir = log_dir
@@ -83,13 +104,17 @@ class ImageCallback(tf.keras.callbacks.Callback):
 
                 # Create a grid of 4x4 images
                 display_list = [self.test_input[0], self.test_target[0], prediction[0]]
-                display_list = [tf.image.convert_image_dtype(x, tf.float64) for x in display_list]
-                display_list = [x* 0.5 + 0.5 for x in display_list]
+                display_list = [
+                    tf.image.convert_image_dtype(x, tf.float64) for x in display_list
+                ]
+                display_list = [x * 0.5 + 0.5 for x in display_list]
                 titles = ["Input Image", "Ground Truth", "Predicted Image"]
 
                 # Log the generated image to TensorBoard
                 with self.file_writer.as_default():
-                    tf.summary.image(' '.join(titles), display_list, step=epoch, max_outputs=6)
+                    tf.summary.image(
+                        " ".join(titles), display_list, step=epoch, max_outputs=6
+                    )
                 self.file_writer.flush()
 
                 # Flush the summary writer
@@ -99,7 +124,6 @@ class ImageCallback(tf.keras.callbacks.Callback):
         # Clear the session to free up memory
         if epoch % 1000 == 0 and epoch != 0:
             tf.keras.backend.clear_session()
-
 
 
 def VGG19Generator(num_classes=3, trainable=False):
@@ -123,7 +147,7 @@ def VGG19Generator(num_classes=3, trainable=False):
 
     # Upsampling layers
 
-   # up_conv5 = _upsample(512, 3)(block5)  # (32 x 32 x 512)
+    # up_conv5 = _upsample(512, 3)(block5)  # (32 x 32 x 512)
     # up_concat5 = tf.keras.layers.concatenate([up_conv5, block4])  # (32 x 32 x 1024)
     up_conv1 = _upsample(256, 3)(block4)  # (64 x 64 x 256)
     up_concat1 = tf.keras.layers.concatenate([up_conv1, block3])  # (64 x 64 x 512)
@@ -141,6 +165,7 @@ def VGG19Generator(num_classes=3, trainable=False):
     model = tf.keras.models.Model(inputs=vgg19.input, outputs=output_layer)
 
     return model
+
 
 def VGG19Discriminator(trainable=False):
     inp = tf.keras.layers.Input(shape=[None, None, 3], name="input_image")
@@ -325,11 +350,18 @@ class GAN(tf.keras.Model):
         """
         vgg = tf.keras.applications.VGG19(include_top=False, weights="imagenet")
         vgg.trainable = False
-        outputs = [vgg.get_layer(name).output for name in ["block1_conv2", "block2_conv2"]]
+        outputs = [
+            vgg.get_layer(name).output for name in ["block1_conv2", "block2_conv2"]
+        ]
         model = tf.keras.Model([vgg.input], outputs)
         return model
 
-    def compile(self, g_optimizer: tf.keras.optimizers, d_optimizer: tf.keras.optimizers, loss_fn: tf.keras.losses):
+    def compile(
+        self,
+        g_optimizer: tf.keras.optimizers,
+        d_optimizer: tf.keras.optimizers,
+        loss_fn: tf.keras.losses,
+    ):
         """
         Compile the model
 
@@ -354,7 +386,7 @@ class GAN(tf.keras.Model):
         Parameters
         ----------
         input : tuple
-            This is highly dependent on the data you are using. 
+            This is highly dependent on the data you are using.
             In this case, it must be a tuple of (input_image, target).
 
         Returns
@@ -371,18 +403,20 @@ class GAN(tf.keras.Model):
                 [input_image, gen_output], training=True
             )
 
-            gen_perceptual_loss = self.perceptual_loss(target = target, generated = gen_output)
+            gen_perceptual_loss = self.perceptual_loss(
+                target=target, generated=gen_output
+            )
 
             g_loss, gen_gan_loss, gen_l1_loss = self.generator_loss(
                 disc_generated_output, gen_output, target
             )
-            g_loss = g_loss + gen_perceptual_loss*5
+            g_loss = g_loss + gen_perceptual_loss * 5
             d_loss = self.discriminator_loss(disc_real_output, disc_generated_output)
 
         generator_gradients = gen_tape.gradient(
             g_loss, self.generator.trainable_variables
         )
-        discriminator_gradients = disc_tape.gradient( 
+        discriminator_gradients = disc_tape.gradient(
             d_loss, self.discriminator.trainable_variables
         )
 
@@ -421,11 +455,11 @@ class GAN(tf.keras.Model):
 
         Parameters
         ----------
-        disc_generated_output : 
+        disc_generated_output :
             Discriminator output for generated images
-        gen_output : 
+        gen_output :
             Generated image
-        target : 
+        target :
             Target image
 
         Returns
@@ -471,20 +505,20 @@ class GAN(tf.keras.Model):
         total_disc_loss = real_loss + generated_loss
 
         return total_disc_loss
-    
+
     def perceptual_loss(self, target, generated):
         """
         Perceptual loss function: Compares the features generated from the target and
         generated images by the VGG19 network. The perceptual loss is the mean squared
         error between the two sets of features.
-        
+
         Parameters
         ----------
         target : image
             Target image
         generated : image
             Generated image
-        
+
         Returns
         -------
         float
@@ -493,34 +527,34 @@ class GAN(tf.keras.Model):
         # Get the VGG-19 features for the target and generated images
         target_features = self.vgg(target)
         generated_features = self.vgg(generated)
-        
+
         # Compute the mean squared error between the target and generated features
         loss = 0
         for t, g in zip(target_features, generated_features):
             loss += tf.reduce_mean(tf.square(t - g))
         loss /= len(target_features)
-        
+
         return tf.cast(loss, tf.float32)
 
     def call(self, inputs, training=None, mask=None):
         # Not used
         """
         Call method used in the fit method
-        
+
         Parameters
         ----------
         inputs : tuple
-            This is highly dependent on the data you are using. 
-            In this case, it must be a tuple of (input_image, target).  
+            This is highly dependent on the data you are using.
+            In this case, it must be a tuple of (input_image, target).
         training : bool, optional
             Whether the model is training or not, by default None
         mask : None, optional
             by default None
-        
+
         Returns
         -------
         dict
             Dictionary containing the losses for the generator and discriminator.
         """
-        
+
         return self.generator(inputs, training=training)
