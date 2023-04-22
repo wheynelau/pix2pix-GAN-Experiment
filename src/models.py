@@ -2,6 +2,7 @@ from tensorflow.keras.applications.vgg19 import VGG19
 import math
 import tensorflow as tf
 import numpy as np
+import datetime
 
 class TerminateOnNaNOrInf(tf.keras.callbacks.Callback):
 
@@ -65,9 +66,6 @@ def generate_for_callback(model:tf.keras.Model, test_input:np.ndarray, tar:np.nd
         
     return lambda epoch, logs: generate_images_tensorboard(epoch, logs)
 
-import tensorflow as tf
-import datetime
-
 class ImageCallback(tf.keras.callbacks.Callback):
     def __init__(self, generator:tf.keras.Model, log_dir:str, test_input:np.ndarray, test_target:np.ndarray):
         super(ImageCallback, self).__init__()
@@ -121,13 +119,13 @@ def VGG19Generator(num_classes=3, trainable=False):
     block2 = vgg19.get_layer("block2_conv2").output  # (128 x 128 x 128)
     block3 = vgg19.get_layer("block3_conv4").output  # (64 x 64 x 256)
     block4 = vgg19.get_layer("block4_conv4").output  # (32 x 32 x 512)
-    block5 = vgg19.get_layer("block5_conv4").output  # (16 x 16 x 512)
+    # block5 = vgg19.get_layer("block5_conv4").output  # (16 x 16 x 512)
 
     # Upsampling layers
 
-    up_conv5 = _upsample(512, 3)(block5)  # (32 x 32 x 512)
-    up_concat5 = tf.keras.layers.concatenate([up_conv5, block4])  # (32 x 32 x 1024)
-    up_conv1 = _upsample(256, 3)(up_concat5)  # (64 x 64 x 256)
+   # up_conv5 = _upsample(512, 3)(block5)  # (32 x 32 x 512)
+    # up_concat5 = tf.keras.layers.concatenate([up_conv5, block4])  # (32 x 32 x 1024)
+    up_conv1 = _upsample(256, 3)(block4)  # (64 x 64 x 256)
     up_concat1 = tf.keras.layers.concatenate([up_conv1, block3])  # (64 x 64 x 512)
     up_conv2 = _upsample(128, 3)(up_concat1)  # (128 x 128 x 128)
     up_concat2 = tf.keras.layers.concatenate([up_conv2, block2])  # (128 x 128 x 256)
@@ -143,58 +141,6 @@ def VGG19Generator(num_classes=3, trainable=False):
     model = tf.keras.models.Model(inputs=vgg19.input, outputs=output_layer)
 
     return model
-
-
-LAMBDA = 100
-loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)
-
-
-def generator_loss(disc_generated_output, gen_output, target):
-    """
-    L1 loss and GAN loss are two different types of loss functions commonly used
-    in Generative Adversarial Networks (GANs).
-
-    L1 loss, also known as mean absolute error (MAE), measures the average absolute
-    differences between the predicted and target values. In the context of GANs, L1
-    loss is often used to encourage the generated images to be similar to the target
-    images in terms of their pixel values.
-
-    GAN loss, on the other hand, is a type of loss function used in the
-    discriminator to distinguish between real and fake images. The goal of the
-    discriminator is to assign high scores to real images and low scores to fake
-    images.
-
-    In summary, L1 loss encourages the generator to produce images that are similar
-    to the target images in terms of their pixel values, while GAN loss encourages
-    the generator to produce images that can fool the discriminator into thinking
-    that they are real.
-
-    Parameters
-    ----------
-    disc_generated_output : _type_
-        _description_
-    gen_output : _type_
-        _description_
-    target : _type_
-        _description_
-
-    Returns
-    -------
-    _type_
-        _description_
-    """
-
-    gan_loss = loss_object(tf.ones_like(disc_generated_output), disc_generated_output)
-
-    # Mean absolute error
-    l1_loss = tf.reduce_mean(
-        tf.abs(tf.cast(target, tf.float32) - tf.cast(gen_output, tf.float32))
-    )
-
-    total_gen_loss = tf.cast(gan_loss, tf.float32) + (LAMBDA * l1_loss)
-
-    return total_gen_loss, gan_loss, l1_loss
-
 
 def VGG19Discriminator(trainable=False):
     inp = tf.keras.layers.Input(shape=[None, None, 3], name="input_image")
@@ -219,18 +165,6 @@ def VGG19Discriminator(trainable=False):
     x = tf.keras.layers.Flatten()(x)
 
     return tf.keras.Model(inputs=[inp, tar], outputs=x)
-
-
-def discriminator_loss(disc_real_output, disc_generated_output):
-    real_loss = loss_object(tf.ones_like(disc_real_output), disc_real_output)
-
-    generated_loss = loss_object(
-        tf.zeros_like(disc_generated_output), disc_generated_output
-    )
-
-    total_disc_loss = real_loss + generated_loss
-
-    return total_disc_loss
 
 
 def _downsample(filters, size, apply_batchnorm=True):
@@ -381,19 +315,53 @@ class GAN(tf.keras.Model):
         self.vgg.trainable = False
 
     def builds_vgg(self):
+        """
+        Build the VGG19 model for perceptual loss
+
+        Returns
+        -------
+        tf.keras.Model
+            VGG19 model
+        """
         vgg = tf.keras.applications.VGG19(include_top=False, weights="imagenet")
         vgg.trainable = False
         outputs = [vgg.get_layer(name).output for name in ["block1_conv2", "block2_conv2"]]
         model = tf.keras.Model([vgg.input], outputs)
         return model
 
-    def compile(self, g_optimizer, d_optimizer, loss_fn):
+    def compile(self, g_optimizer: tf.keras.optimizers, d_optimizer: tf.keras.optimizers, loss_fn: tf.keras.losses):
+        """
+        Compile the model
+
+        Parameters
+        ----------
+        g_optimizer : tf.keras.optimizers
+            Generator optimizer
+        d_optimizer : tf.keras.optimizers
+            Discriminator optimizer
+        loss_fn : tf.keras.losses
+            Loss function
+        """
         super().compile()
         self.g_optimizer = g_optimizer
         self.d_optimizer = d_optimizer
         self.loss_fn = loss_fn
 
     def train_step(self, input):
+        """
+        train step used in the fit method
+
+        Parameters
+        ----------
+        input : tuple
+            This is highly dependent on the data you are using. 
+            In this case, it must be a tuple of (input_image, target).
+
+        Returns
+        -------
+        dict
+            Dictionary containing the losses for the generator and discriminator.
+        """
         input_image, target = input
         with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
             gen_output = self.generator(input_image, training=True)
@@ -408,7 +376,7 @@ class GAN(tf.keras.Model):
             g_loss, gen_gan_loss, gen_l1_loss = self.generator_loss(
                 disc_generated_output, gen_output, target
             )
-            g_loss = g_loss + gen_perceptual_loss
+            g_loss = g_loss + gen_perceptual_loss*5
             d_loss = self.discriminator_loss(disc_real_output, disc_generated_output)
 
         generator_gradients = gen_tape.gradient(
@@ -439,6 +407,32 @@ class GAN(tf.keras.Model):
         }
 
     def generator_loss(self, disc_generated_output, gen_output, target, LAMBDA=50):
+        """
+        L1 loss and GAN loss are two different types of loss functions commonly used
+        in Generative Adversarial Networks (GANs).
+
+        L1 loss encourages the generator to produce images that are similar
+        to the target images in terms of their pixel values, while GAN loss encourages
+        the generator to produce images that can fool the discriminator into thinking
+        that they are real.
+
+        A higher lambda value means that the generator will generate images that are
+        more similar to the target images.
+
+        Parameters
+        ----------
+        disc_generated_output : 
+            Discriminator output for generated images
+        gen_output : 
+            Generated image
+        target : 
+            Target image
+
+        Returns
+        -------
+        float
+            Loss value
+        """
         gan_loss = self.loss_fn(
             tf.ones_like(disc_generated_output), disc_generated_output
         )
@@ -453,6 +447,21 @@ class GAN(tf.keras.Model):
         return total_gen_loss, gan_loss, l1_loss
 
     def discriminator_loss(self, disc_real_output, disc_generated_output):
+        """
+        Discriminator loss function
+
+        Parameters
+        ----------
+        disc_real_output : image
+            Real image
+        disc_generated_output : image
+            Generated image
+
+        Returns
+        -------
+        float
+            Loss value
+        """
         real_loss = self.loss_fn(tf.ones_like(disc_real_output), disc_real_output)
 
         generated_loss = self.loss_fn(
@@ -464,6 +473,23 @@ class GAN(tf.keras.Model):
         return total_disc_loss
     
     def perceptual_loss(self, target, generated):
+        """
+        Perceptual loss function: Compares the features generated from the target and
+        generated images by the VGG19 network. The perceptual loss is the mean squared
+        error between the two sets of features.
+        
+        Parameters
+        ----------
+        target : image
+            Target image
+        generated : image
+            Generated image
+        
+        Returns
+        -------
+        float
+            Loss value
+        """
         # Get the VGG-19 features for the target and generated images
         target_features = self.vgg(target)
         generated_features = self.vgg(generated)
@@ -477,4 +503,24 @@ class GAN(tf.keras.Model):
         return tf.cast(loss, tf.float32)
 
     def call(self, inputs, training=None, mask=None):
+        # Not used
+        """
+        Call method used in the fit method
+        
+        Parameters
+        ----------
+        inputs : tuple
+            This is highly dependent on the data you are using. 
+            In this case, it must be a tuple of (input_image, target).  
+        training : bool, optional
+            Whether the model is training or not, by default None
+        mask : None, optional
+            by default None
+        
+        Returns
+        -------
+        dict
+            Dictionary containing the losses for the generator and discriminator.
+        """
+        
         return self.generator(inputs, training=training)
