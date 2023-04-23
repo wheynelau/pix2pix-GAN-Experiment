@@ -1,5 +1,6 @@
 import os
 import gc
+import json
 import datetime
 import tensorflow as tf
 tf.keras.mixed_precision.set_global_policy("mixed_float16")
@@ -8,6 +9,7 @@ from src.models import *
 from src.utils import TFUtils
 import argparse
 import time
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 # Define the command line arguments
@@ -110,8 +112,8 @@ generator = VGG19Generator()
 discriminator = Discriminator()
 
 # Create the optimizers
-generator_optimizer = tf.keras.optimizers.Adam(args.learning_rate, beta_1=0.6)
-discriminator_optimizer = tf.keras.optimizers.Adam(args.learning_rate, beta_1=0.6)
+generator_optimizer = tf.keras.optimizers.Adam(args.learning_rate, beta_1=0.5)
+discriminator_optimizer = tf.keras.optimizers.Adam(args.learning_rate, beta_1=0.5)
 
 loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 gan = GAN(generator = generator, discriminator = discriminator)
@@ -141,6 +143,10 @@ ckpt_dir = os.path.join("./training_checkpoints",str(datetime.datetime.now().str
 print("New model will be saved to: ", ckpt_dir)
 checkpoint_prefix = ckpt_dir
 
+os.makedirs(log_dir, exist_ok=True)
+with open(os.path.join(log_dir,'commandline_args.txt'), 'w') as f:
+    json.dump(args.__dict__, f, indent=2)
+
 def main():
 
     ### CHECKPOINTS ###
@@ -159,8 +165,8 @@ def main():
     tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir,
                                                         write_graph=False,)
 
-    es_callback = tf.keras.callbacks.EarlyStopping(monitor='g_loss', restore_best_weights=True,
-                                                    mode='min', baseline=100, verbose=1, patience=50)
+    es_callback = tf.keras.callbacks.EarlyStopping(monitor='g_loss', restore_best_weights=False,
+                                                    mode='min', baseline=100, verbose=1, patience=100)
 
     lr_scheduler_d = StepLearningRateOnEarlyStopping(discriminator_optimizer, factor= DOWN_FACTOR, patience = 10)
 
