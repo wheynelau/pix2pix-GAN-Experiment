@@ -409,8 +409,8 @@ class GAN(tf.keras.Model):
             g_loss, gen_gan_loss, gen_l1_loss = self.generator_loss(
                 disc_generated_output, gen_output, target
             )
-            g_loss = g_loss + gen_perceptual_loss/2
-            d_loss = self.discriminator_loss(disc_real_output , disc_generated_output)
+            g_loss = g_loss + gen_perceptual_loss / 2
+            d_loss = self.discriminator_loss(disc_real_output,disc_generated_outpor:ut)
 
         generator_gradients = gen_tape.gradient(
             g_loss, self.generator.trainable_variables
