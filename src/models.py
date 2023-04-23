@@ -2,7 +2,6 @@ from tensorflow.keras.applications.vgg19 import VGG19
 import math
 import tensorflow as tf
 import numpy as np
-import datetime
 
 
 class TerminateOnNaNOrInf(tf.keras.callbacks.Callback):
@@ -182,7 +181,7 @@ def VGG19Discriminator(trainable=False):
         for layer in vgg.layers:
             layer.trainable = True
 
-    inp_ = vgg(inp_)
+    inp_ = vgg(inp)
     tar_ = vgg(tar)
 
     x = tf.keras.layers.concatenate([inp_, tar_])  # (batch_size, 256, 256, channels*2)
@@ -411,7 +410,7 @@ class GAN(tf.keras.Model):
                 disc_generated_output, gen_output, target
             )
             g_loss = g_loss + gen_perceptual_loss/2
-            d_loss = self.discriminator_loss(disc_real_output, disc_generated_output)
+            d_loss = self.discriminator_loss(disc_real_output , disc_generated_output)
 
         generator_gradients = gen_tape.gradient(
             g_loss, self.generator.trainable_variables
