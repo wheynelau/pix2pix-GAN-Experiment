@@ -1,5 +1,7 @@
-from src.models import VGG19Generator
+import sys
 import os
+sys.path.append('..')
+from src.models import VGG19Generator
 import numpy as np
 import tensorflow as tf # replace with your generator class name
 
