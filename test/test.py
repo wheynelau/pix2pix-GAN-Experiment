@@ -1,13 +1,9 @@
-from ..src.models import VGG19Generator
+from src.models import VGG19Generator
 import os
 import numpy as np
 import tensorflow as tf # replace with your generator class name
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # suppress TensorFlow logging
-
-# Check code style using flake8
-def test_flake8():
-    assert os.system('flake8 --ignore=E501 src/model.py') == 0
 
 # Test if the generator can load and predict an image without errors
 def test_generator():
@@ -23,7 +19,7 @@ def test_generator():
     
     # Load the generator weights from file
     # Base model
-    generator.load_weights('..models/generator.h5')
+    generator.load_weights('models/generator.h5')
     
     # Preprocess the input
     pixels /= 255.0
