@@ -105,7 +105,7 @@ usage: infer.py [-h] [--cpu] [--concat] image_path output_path
 ```
 # Results
 
-Tensorboard results can be found [here](https://tensorboard.dev/experiment/gk65vsEQQDuOCeGJv2Yt1A/)
+
 
 1. The generator was able to generate rather realistic images however they were incomplete. They looked similar to incomplete paintings.
 2. Despite not having colour information, the generator was able to generate images with similar colours to the original images.
