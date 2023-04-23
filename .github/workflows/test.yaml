@@ -20,7 +20,7 @@ jobs:
         pip install flake8 tensorflow pillow
 
     - name: Test flake8
-      run: flake8 --ignore=E501 generator.py
+      run: flake8 --ignore=E501 src/models.py
 
     - name: Test generator
       run: python test/test.py
