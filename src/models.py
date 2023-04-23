@@ -351,7 +351,7 @@ class GAN(tf.keras.Model):
         vgg = tf.keras.applications.VGG19(include_top=False, weights="imagenet")
         vgg.trainable = False
         outputs = [
-            vgg.get_layer(name).output for name in ["block1_conv2", "block2_conv2"]
+            vgg.get_layer(name).output for name in ["block1_conv2", "block2_conv2", "block3_conv4"]
         ]
         model = tf.keras.Model([vgg.input], outputs)
         return model
@@ -410,7 +410,7 @@ class GAN(tf.keras.Model):
             g_loss, gen_gan_loss, gen_l1_loss = self.generator_loss(
                 disc_generated_output, gen_output, target
             )
-            g_loss = g_loss + gen_perceptual_loss * 5
+            g_loss = g_loss + gen_perceptual_loss/2
             d_loss = self.discriminator_loss(disc_real_output, disc_generated_output)
 
         generator_gradients = gen_tape.gradient(
@@ -440,7 +440,7 @@ class GAN(tf.keras.Model):
             "perceptual_loss": self.perceptual_loss_tracker.result(),
         }
 
-    def generator_loss(self, disc_generated_output, gen_output, target, LAMBDA=50):
+    def generator_loss(self, disc_generated_output, gen_output, target, LAMBDA=100):
         """
         L1 loss and GAN loss are two different types of loss functions commonly used
         in Generative Adversarial Networks (GANs).
