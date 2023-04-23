@@ -1,4 +1,4 @@
-from src.models import Generator
+from src.models import Generator, VGG19Generator
 import argparse
 from PIL import Image
 import os
@@ -32,7 +32,7 @@ if args.model_path:
 else:
     model_folder = os.listdir('models')
     model_path = os.path.join('models', max(model_folder, key=os.path.getctime), 'generator.h5')
-model = Generator()
+model = VGG19Generator()
 model.load_weights(model_path)
 
 images = [os.path.join(args.image_path, x) for x in os.listdir(args.image_path)]
@@ -45,10 +45,10 @@ for image in tqdm(images):
         print("Image size is not 256x256. Performance may be affected.")
 
     input = numpy.array(input)
-    input_ = input / 127.5 - 1
+    input_ = input / 255
     input_ = numpy.expand_dims(input_, axis=0)
     output = model.predict(input_)
-    output = (output+1) * 127.5
+    output = output * 255
     output = numpy.squeeze(output, axis=0)
     output_image = Image.fromarray(output.astype(numpy.uint8))
     if args.concat:
