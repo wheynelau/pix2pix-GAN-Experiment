@@ -105,15 +105,29 @@ usage: infer.py [-h] [--cpu] [--concat] image_path output_path
 ```
 # Results
 
-
-
 1. The generator was able to generate rather realistic images however they were incomplete. They looked similar to incomplete paintings.
 2. Despite not having colour information, the generator was able to generate images with similar colours to the original images.
   - This could mean that the generator was able to learn the colour information from the features
+3. The model could not learn the features of the original images even after adding perception loss
+   - More experimentation needs to be carried over -> moved into TODO
+
+Here are some of the samples, as mentioned, more experimentation needs to be carried out to improve the results.
+
+<img src ="images/9.png" title='Initial run with the original pix2pix architecture' width="50%">
+
+<img src ="images/9_percep.png" title='Run with VGG generator, default discriminator and perceptual loss' width="50%">
+
+Further details on the perceptual loss:
+
+The VGG features are from the first 3 conv layers of the VGG19 model. The features are extracted from the original image and the generated image. 
+
+Thereafter, the mean squared error is calculated between the features of the original image and the generated image.
+
+The perceptual loss was given a weight of 0.5 and the lambda value for the l1 loss function was set to 100.
 
 # Problems
-1. VGG implementation was not successful, leading to inf loss on the generator
-   - Suspected that the discriminator was overpowering the generator
+1. VGG implementation of generator was successful
+   - However, the performance was not great
 
 # Learning points
 1. GANs are hard to train
@@ -124,13 +138,14 @@ usage: infer.py [-h] [--cpu] [--concat] image_path output_path
 
 1. Implement a mix of pretrained models for the discriminator and generator
    - Using VGG for generator and using a custom discriminator vice versa
+   - UPDATE: Implemented VGG for generator and custom discriminator
 2. Experiment with different lambda values for the loss function
    - Hypothesis: Generate images that are realistic but not similar to the original images
 3. Implement hydra for configuration management
-4. Fine tune a pretrained generator and discriminator
-5. Increase customisability of the training pipeline
+4. Increase customisability of the training pipeline
    - Use custom file names : currently the file names are hardcoded, such as preprocessed/train/image and preprocessed/train/mask
    - Add more options for the loss function
+   - UPDATE: Implemented perceptual loss
 
 # Contributing
 
