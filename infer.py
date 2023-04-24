@@ -32,18 +32,19 @@ if args.model_path:
 else:
     model_folder = os.listdir('models')
     model_path = os.path.join('models', max(model_folder, key=os.path.getctime), 'generator.h5')
-model = VGG19Generator()
-model.load_weights(model_path)
+try:
+    model = VGG19Generator()
+    model.load_weights(model_path)  
+except:
+    model = Generator()
+    model.load_weights(model_path)
 
 images = [os.path.join(args.image_path, x) for x in os.listdir(args.image_path)]
 
 for image in tqdm(images):
     input = Image.open(image)
     input = input.convert('RGB')
-    
-    if input.size != (256, 256):
-        print("Image size is not 256x256. Performance may be affected.")
-
+    input = input.resize((256, 256), Image.BICUBIC)
     input = numpy.array(input)
     input_ = input / 255
     input_ = numpy.expand_dims(input_, axis=0)
