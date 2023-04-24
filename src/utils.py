@@ -13,6 +13,12 @@ class TFUtils:
             else:
                 img = img/127.5 - 1
             return img
+    
+    def preprocessor_train(self,img):
+        img /= 255
+        noise = tf.random.normal(shape=tf.shape(img), mean=0.0, stddev=1.0, dtype=tf.float32) * 0.1 
+        noisy_image = tf.clip_by_value(img + noise, 0.0, 1.0)
+        return noisy_image
 
     def create_datagenerators(self,height, width, bs):
         seed = 1
@@ -26,7 +32,7 @@ class TFUtils:
             horizontal_flip=True,
             vertical_flip=True,
             fill_mode="reflect",
-            preprocessing_function=self.preprocessor,
+            preprocessing_function=self.preprocessor_train,
         )
         train_generator_image = train_datagen.flow_from_directory(
             "preprocessed/train",
