@@ -113,13 +113,17 @@ usage: infer.py [-h] [--cpu] [--concat] image_path output_path
 
 Here are some of the samples, as mentioned, more experimentation needs to be carried out to improve the results.
 
-<img src ="images/9.png" title='Initial run with the original pix2pix architecture' width="50%">
+<img src ="images/9.png" title='Initial run with the original pix2pix architecture' alt width="50%">
+
+> Initial run with the original pix2pix architecture
 
 <img src ="images/9_percep.png" title='Run with VGG generator, default discriminator and perceptual loss' width="50%">
 
+> Run with VGG generator, default discriminator and perceptual loss
+
 Further details on the perceptual loss:
 
-The VGG features are from the first 3 conv layers of the VGG19 model. The features are extracted from the original image and the generated image. 
+The VGG features are from the first 3 conv outputs before the max pool layers.
 
 Thereafter, the mean squared error is calculated between the features of the original image and the generated image.
 
