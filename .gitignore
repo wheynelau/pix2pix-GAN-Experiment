@@ -165,8 +165,8 @@ preprocessed/
 logs/
 training_checkpoints/
 .vscode/
-input/
-output/
+input*/
+output*/
 settings.json
 src/__pycache__
 .pylintrc
