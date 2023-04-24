@@ -1,7 +1,7 @@
 import os
 from tqdm import tqdm
 import tensorflow as tf
-
+import argparse
 # Run this script in the root directory of the project
 
 # Assumes the data is in data/train and data/test
@@ -47,21 +47,21 @@ def _load(image_file):
     return input_image, real_image
 
 
-def main():
+def main(preprocess_path:str, data_path:str):
     """
     Runs the preprocessing script
     Splits the image into 
     """
 
-    train_images_path = [os.path.join("data/train", x) for x in os.listdir("data/train") if "-" not in x]
-    test_images_path = [os.path.join("data/test", x) for x in os.listdir("data/test")]
+    train_images_path = [os.path.join(data_path, 'train', x) for x in os.listdir(os.path.join(data_path, 'train')) if "-" not in x]
+    test_images_path = [os.path.join(data_path, 'test', x) for x in os.listdir(os.path.join(data_path, 'test'))]
 
     # create a new directory to store the preprocessed images
 
-    train_image_path = "preprocessed/train/image/"
-    train_mask_path = "preprocessed/train/mask/"
-    test_image_path = "preprocessed/test/image/"
-    test_mask_path = "preprocessed/test/mask/"
+    train_image_path = os.path.join(preprocess_path, "train", "image")
+    train_mask_path = os.path.join(preprocess_path, "train", "target")
+    test_image_path = os.path.join(preprocess_path, "test", "image")
+    test_mask_path = os.path.join(preprocess_path, "test", "target")
 
     # create the directories using os.makedirs
     for x in [train_image_path, train_mask_path, test_image_path, test_mask_path]:
@@ -82,4 +82,18 @@ def main():
         tf.keras.utils.save_img(test_mask_path + str(i) + ".png", y)
 
 if __name__ == "__main__":
-    main()
+
+    args= argparse.ArgumentParser()
+    args.add_argument("data_path", type=str, default="data")
+    args.add_argument("preprocess_path", type=str, default="preprocess")
+    args = args.parse_args()
+
+    # check args
+
+    if not os.path.exists(args.data_path):
+        raise ValueError("Data path does not exist")
+
+    if not os.path.exists(args.preprocess_path):
+        os.makedirs(args.preprocess_path)
+
+    main(args.preprocess_path, args.data_path)
