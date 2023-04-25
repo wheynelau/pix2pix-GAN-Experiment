@@ -168,12 +168,12 @@ def VGG19Generator(num_classes=3, trainable=False):
 
 def VGG19Discriminator(trainable=False):
     initializer = tf.random_normal_initializer(0.0, 0.02)
-    inp = tf.keras.layers.Input(shape=[256, 256, 3], name="input_image")
-    tar = tf.keras.layers.Input(shape=[256, 256, 3], name="target_image")
+    inp = tf.keras.layers.Input(shape=[None, None, 3], name="input_image")
+    tar = tf.keras.layers.Input(shape=[None, None, 3], name="target_image")
 
     # VGG19 architecture
     vgg = tf.keras.applications.VGG19(
-        include_top=False, weights="imagenet", input_shape=[256, 256, 3]
+        include_top=False, weights="imagenet", input_shape=[None, None, 3]
     )
     if not trainable:
         for layer in vgg.layers:
