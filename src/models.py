@@ -167,8 +167,9 @@ def VGG19Generator(num_classes=3, trainable=False):
 
 
 def VGG19Discriminator(trainable=False):
-    inp = tf.keras.layers.Input(shape=[None, None, 3], name="input_image")
-    tar = tf.keras.layers.Input(shape=[None, None, 3], name="target_image")
+    initializer = tf.random_normal_initializer(0.0, 0.02)
+    inp = tf.keras.layers.Input(shape=[256, 256, 3], name="input_image")
+    tar = tf.keras.layers.Input(shape=[256, 256, 3], name="target_image")
 
     # VGG19 architecture
     vgg = tf.keras.applications.VGG19(
@@ -184,11 +185,19 @@ def VGG19Discriminator(trainable=False):
     inp_ = vgg(inp)
     tar_ = vgg(tar)
 
-    x = tf.keras.layers.concatenate([inp_, tar_])  # (batch_size, 256, 256, channels*2)
-    # Additional trainable layers
-    x = tf.keras.layers.Flatten()(x)
+    x = tf.keras.layers.concatenate([inp_, tar_])
 
-    return tf.keras.Model(inputs=[inp, tar], outputs=x)
+    x = tf.keras.layers.Conv2D(512, 2, strides=1, kernel_initializer=initializer)(x)
+    batchnorm1 = tf.keras.layers.BatchNormalization()(x)
+
+    leaky_relu = tf.keras.layers.LeakyReLU()(batchnorm1)  # (batch_size, 33, 33, 512)
+
+    last = tf.keras.layers.Conv2D(1, 4, strides=1, kernel_initializer=initializer)(
+        leaky_relu
+    )  # (batch_size, 256, 256, channels*2)
+    # Additional trainable layers
+
+    return tf.keras.Model(inputs=[inp, tar], outputs=last)
 
 
 def _downsample(filters, size, apply_batchnorm=True):
