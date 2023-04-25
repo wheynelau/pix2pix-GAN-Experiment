@@ -15,3 +15,4 @@ dependencies:
   - pillow
   - pip:
       - tensorflow-gpu==2.9.3
+      - hydra-core
