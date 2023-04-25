@@ -35,9 +35,12 @@ train:
   # noise amount, between 0< x <=1
   noise_amount: 1
 preprocess:
+  # default input and output folder
   data_path: ./data
   preprocess_path: ./preprocess_no_mask
+  # whether to use mask layer
   mask: false
+  # preprocess using cpu instead of gpu
   cpu: true
 infer:
   # default input and output folder
@@ -46,7 +49,7 @@ infer:
   output_folder: ./output-20230425-1625
   # path linking to a folder containing a generator.h5
   model_path: ./models/20230425-1625
-  # whether to use gpu or not
+  # infer using cpu instead of gpu
   cpu: true
   # concat images side by side for comparison
   concat: true
