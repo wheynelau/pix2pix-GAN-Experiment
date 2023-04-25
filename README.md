@@ -49,7 +49,12 @@ git clone https://github.com/wheynelau/VGG19-gan-experiment.git
 ```bash
 conda env create -f environment.yml
 ```
-3. Setup the folders and files
+3. Setup config.yaml
+
+```yaml
+
+```
+4. Setup the folders and files
 
 If your image is in the format of two images combined together, you can use the 'preprocess.py' file to split them into two images. 
 
@@ -73,18 +78,15 @@ Running the 'preprocess.py' file will create a new directory called 'preprocesse
 ├───preprocessed
 │   ├───test
 │   │   ├───image
-│   │   └───mask
+│   │   └───target
 │   └───train
 │       ├───image
-│       └───mask
+│       └───target
 ```
 # Training
 
 ```bash
-$ python train.py --help
-usage: train.py [-h] [--verbose VERBOSE] [--epochs EPOCHS] [--steps STEPS] [--runs RUNS]
-                [--batch_size BATCH_SIZE] [--learning_rate LEARNING_RATE] [--down_factor DOWN_FACTOR]        
-                [--width WIDTH] [--height HEIGHT] [--load] [--vgg]
+$ python train.py
 
 ```
 _Note: VGG was not trained_
@@ -99,8 +101,7 @@ Run the below command to infer on a folder containing images:
 _Note: There is no exception handling for non-image files, please input only image files_
 
 ```bash
-$ python infer.py --help
-usage: infer.py [-h] [--cpu] [--concat] image_path output_path
+$ python infer.py
 
 ```
 # Results
@@ -121,6 +122,10 @@ Here are some of the samples, as mentioned, more experimentation needs to be car
 
 > Run with VGG generator, default discriminator and perceptual loss
 
+<img src ="images/9_vgg.png" title='Run with VGG generator, VGG discriminator and perceptual loss' width="50%">
+
+> Run with VGG generator, VGG discriminator and perceptual loss
+
 Further details on the perceptual loss:
 
 The VGG features are from the first 3 conv outputs before the max pool layers.
@@ -130,8 +135,7 @@ Thereafter, the mean squared error is calculated between the features of the ori
 The perceptual loss was given a weight of 0.5 and the lambda value for the l1 loss function was set to 100.
 
 # Problems
-1. VGG implementation of generator was successful
-   - However, the performance was not great
+1. Successfully implemented VGG models as the generator and discriminator, however the model was not able to learn the features of the original images very well. 
 
 # Learning points
 1. GANs are hard to train
@@ -142,7 +146,7 @@ The perceptual loss was given a weight of 0.5 and the lambda value for the l1 lo
 
 1. Implement a mix of pretrained models for the discriminator and generator
    - Using VGG for generator and using a custom discriminator vice versa
-   - UPDATE: Implemented VGG for generator and custom discriminator
+   - UPDATE: Implemented VGG for generator and discriminator
 2. Experiment with different lambda values for the loss function
    - Hypothesis: Generate images that are realistic but not similar to the original images
 3. Implement hydra for configuration management
@@ -158,4 +162,5 @@ Feedback and contributions are welcome. As this is a learning project, I may not
 # Sources 
 
 [pix2pix](https://www.tensorflow.org/tutorials/generative/pix2pix)
+
 [APDrawingGAN](https://github.com/yiranran/APDrawingGAN/) # Found the datasets from this repository
