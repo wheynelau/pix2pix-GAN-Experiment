@@ -1,17 +1,17 @@
-# UNET GAN
+# UNET GAN pix2pix with VGG19 generator and discriminator
 
 # Table Of Contents
-- [UNET GAN](#unet-gan)
+- [UNET GAN pix2pix with VGG19 generator and discriminator](#unet-gan-pix2pix-with-vgg19-generator-and-discriminator)
 - [Table Of Contents](#table-of-contents)
 - [Motivation and goals](#motivation-and-goals)
 - [Pre-requisites](#pre-requisites)
 - [Getting started](#getting-started)
-- [Training](#training)
-- [Inferencing](#inferencing)
+  - [Training](#training)
+  - [Inferencing](#inferencing)
 - [Results](#results)
-- [Problems](#problems)
-- [Learning points](#learning-points)
-- [Future enhancements / TODO](#future-enhancements--todo)
+  - [Problems](#problems)
+  - [Learning points](#learning-points)
+  - [Future enhancements / TODO](#future-enhancements--todo)
 - [Contributing](#contributing)
 - [Sources](#sources)
 
@@ -32,6 +32,7 @@ python=3.10
 tensorflow=2.9.3
 cudatoolkit=11.2
 cudnn=8.1
+
 ```
 
 A conda environment file will be provided in the root directory of this repository. It was only tested on a windows machine.
@@ -49,11 +50,10 @@ git clone https://github.com/wheynelau/VGG19-gan-experiment.git
 ```bash
 conda env create -f environment.yml
 ```
-3. Setup config.yaml
+3. Setup conf/config.yaml
 
-```yaml
+> All available options are in the config.yaml file
 
-```
 4. Setup the folders and files
 
 If your image is in the format of two images combined together, you can use the 'preprocess.py' file to split them into two images. 
@@ -67,12 +67,16 @@ Your directory should look like this:
 ```bash
 python src/preprocess.py
 ├───data
-│   ├───mask
+│   ├───mask (optional)
 │   ├───test
 │   └───train
 ```
 
-Running the 'preprocess.py' file will create a new directory called 'preprocessed' and split the images into two images. This is how it would appear:
+Running the 'preprocess.py' file will create a new directory called 'preprocessed' and split the images into two images. It assumes that the images in the mask and test/train are the same names. This is how it would appear after running the 'preprocess.py' file:
+
+```bash
+$ python src/preprocess.py
+```
 
 ```bash
 ├───preprocessed
@@ -83,22 +87,22 @@ Running the 'preprocess.py' file will create a new directory called 'preprocesse
 │       ├───image
 │       └───target
 ```
-# Training
+
+## Training
 
 ```bash
 $ python train.py
-
 ```
-_Note: VGG was not trained_
 
-# Inferencing
+## Inferencing
 
 At the end of train.py, I've added a statement to save the generator of the GAN model.
 This is the generator that will be used for inferencing. 
 
 Run the below command to infer on a folder containing images:
 
-_Note: There is no exception handling for non-image files, please input only image files_
+> Note: There is no exception handling for non-image files, please input only image files
+> In addition, all images will be resized to 256x256
 
 ```bash
 $ python infer.py
@@ -134,26 +138,22 @@ Thereafter, the mean squared error is calculated between the features of the ori
 
 The perceptual loss was given a weight of 0.5 and the lambda value for the l1 loss function was set to 100.
 
-# Problems
+## Problems
 1. Successfully implemented VGG models as the generator and discriminator, however the model was not able to learn the features of the original images very well. 
 
-# Learning points
+## Learning points
 1. GANs are hard to train
 2. It is difficult to tune the learning rates for the generator and discriminator
 3. Successfully implemented custom callbacks for Tensorboard and checkpointing
 4. Created a callback to adjust the learning rate of the generator and discriminator
-# Future enhancements / TODO
+## Future enhancements / TODO
 
 1. Implement a mix of pretrained models for the discriminator and generator
    - Using VGG for generator and using a custom discriminator vice versa
    - UPDATE: Implemented VGG for generator and discriminator
 2. Experiment with different lambda values for the loss function
    - Hypothesis: Generate images that are realistic but not similar to the original images
-3. Implement hydra for configuration management
-4. Increase customisability of the training pipeline
-   - Use custom file names : currently the file names are hardcoded, such as preprocessed/train/image and preprocessed/train/mask
-   - Add more options for the loss function
-   - UPDATE: Implemented perceptual loss
+3. Explore other loss functions 
 
 # Contributing
 
