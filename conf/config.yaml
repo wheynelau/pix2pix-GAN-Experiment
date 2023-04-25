@@ -17,7 +17,7 @@ train:
   # learning rate for generator
   learning_rate: 0.0002
   # learning rate for discriminator = learning_rate * discriminator_factor
-  discriminator_factor: 2
+  discriminator_factor: 1.5
   # factor for LR scheduler
   down_factor: 1
   # beta1 for gen and disc
@@ -26,6 +26,11 @@ train:
   # image size
   width: 256
   height: 256
+  # loss functions parameters
+  # weight for L1 loss
+  l1lambda: 100
+  # weight for perceptual loss
+  perceptual_weight: 0.05
   # whether to use vgg pretrained model
   vgg: true
   # continue training from a checkpoint

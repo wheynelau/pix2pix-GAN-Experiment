@@ -4,6 +4,7 @@ import argparse
 import json
 import datetime
 import tensorflow as tf
+
 tf.keras.mixed_precision.set_global_policy("mixed_float16")
 from tqdm import tqdm
 from src.models import *
@@ -12,7 +13,8 @@ import hydra
 from omegaconf import DictConfig, OmegaConf
 import time
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def train(args: DictConfig):
@@ -25,7 +27,12 @@ def train(args: DictConfig):
     NUM_RUNS = args.train.runs
     EPOCHS = args.train.epochs
     DOWN_FACTOR = args.train.down_factor
-    utils = TFUtils(args.train.vgg, args.preprocess.preprocess_path, args.train.noise, args.train.noise_amount)
+    utils = TFUtils(
+        args.train.vgg,
+        args.preprocess.preprocess_path,
+        args.train.noise,
+        args.train.noise_amount,
+    )
 
     # Create the generator and discriminator
     train_generator, validation_generator = utils.create_datagenerators(
@@ -39,12 +46,26 @@ def train(args: DictConfig):
         discriminator = Discriminator()
 
     # Create the optimizers
-    generator_optimizer = tf.keras.optimizers.Adam(args.train.learning_rate, beta_1= args.train.gen_beta1)
-    discriminator_optimizer = tf.keras.optimizers.Adam(args.train.learning_rate * args.train.discriminator_factor, beta_1= args.train.disc_beta1)
+    generator_optimizer = tf.keras.optimizers.Adam(
+        args.train.learning_rate, beta_1=args.train.gen_beta1
+    )
+    discriminator_optimizer = tf.keras.optimizers.Adam(
+        args.train.learning_rate * args.train.discriminator_factor,
+        beta_1=args.train.disc_beta1,
+    )
 
     loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)
-    gan = GAN(generator = generator, discriminator = discriminator)
-    gan.compile(g_optimizer = generator_optimizer, d_optimizer = discriminator_optimizer,loss_fn = loss_object)
+    gan = GAN(
+        generator=generator,
+        discriminator=discriminator,
+        l1lambda=args.train.l1lambda,
+        perceptual_weight= args.train.perceptual_weight,
+    )
+    gan.compile(
+        g_optimizer=generator_optimizer,
+        d_optimizer=discriminator_optimizer,
+        loss_fn=loss_object,
+    )
 
     os.makedirs("logs", exist_ok=True)
     os.makedirs("training_checkpoints", exist_ok=True)
@@ -52,12 +73,14 @@ def train(args: DictConfig):
     if args.train.load:
         try:
             # load the model from the latest checkpoint
-            time_now = os.listdir('training_checkpoints')[-1]
-            latest = tf.train.latest_checkpoint(os.path.join('training_checkpoints', time_now))
+            time_now = os.listdir("training_checkpoints")[-1]
+            latest = tf.train.latest_checkpoint(
+                os.path.join("training_checkpoints", time_now)
+            )
             print("Loading model from: ", latest)
             gan.load_weights(latest)
             # load the logging folder
-            log_dir = os.path.join("logs", max(os.listdir('logs')))
+            log_dir = os.path.join("logs", max(os.listdir("logs")))
             print("Loading logs from: ", log_dir)
             os.makedirs(log_dir, exist_ok=True)
         except IndexError:
@@ -67,7 +90,11 @@ def train(args: DictConfig):
         time_now = str(datetime.datetime.now().strftime("%Y%m%d-%H%M"))
         log_dir = os.path.join("logs", time_now)
 
-    ckpt_dir = os.path.join("./training_checkpoints",str(datetime.datetime.now().strftime("%Y%m%d-%H%M")), "ckpt")
+    ckpt_dir = os.path.join(
+        "./training_checkpoints",
+        str(datetime.datetime.now().strftime("%Y%m%d-%H%M")),
+        "ckpt",
+    )
     print("New model will be saved to: ", ckpt_dir)
     checkpoint_prefix = ckpt_dir
 
@@ -75,22 +102,32 @@ def train(args: DictConfig):
     example_input, example_target = next(iter(validation_generator))
 
     checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-    filepath=checkpoint_prefix,
-    monitor='g_loss',
-    mode='min',
-    save_best_only=True,
-    save_weights_only=True
-)
-        
-    tf_summary = tf.summary.create_file_writer(os.path.join(log_dir,'images'))
+        filepath=checkpoint_prefix,
+        monitor="g_loss",
+        mode="min",
+        save_best_only=True,
+        save_weights_only=True,
+    )
 
-    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir,
-                                                        write_graph=False,)
+    tf_summary = tf.summary.create_file_writer(os.path.join(log_dir, "images"))
 
-    es_callback = tf.keras.callbacks.EarlyStopping(monitor='g_loss', restore_best_weights=False,
-                                                    mode='min', baseline=100, verbose=1, patience=100)
+    tensorboard_callback = tf.keras.callbacks.TensorBoard(
+        log_dir=log_dir,
+        write_graph=False,
+    )
 
-    lr_scheduler_d = StepLearningRateOnEarlyStopping(discriminator_optimizer, factor= DOWN_FACTOR, patience = 10)
+    es_callback = tf.keras.callbacks.EarlyStopping(
+        monitor="g_loss",
+        restore_best_weights=False,
+        mode="min",
+        baseline=100,
+        verbose=1,
+        patience=100,
+    )
+
+    lr_scheduler_d = StepLearningRateOnEarlyStopping(
+        discriminator_optimizer, factor=DOWN_FACTOR, patience=10
+    )
 
     #### TRAINING LOOP ####
     start = time.time()
@@ -104,16 +141,19 @@ def train(args: DictConfig):
             epochs=EPOCHS,
             steps_per_epoch=STEPS,
             use_multiprocessing=True,
-            verbose = args.train.verbose,
-            callbacks=[checkpoint_callback, 
-            tensorboard_callback, 
-            es_callback,
-            lr_scheduler_d,
-            #terminate
+            verbose=args.train.verbose,
+            callbacks=[
+                checkpoint_callback,
+                tensorboard_callback,
+                es_callback,
+                lr_scheduler_d,
+                # terminate
             ],
         )
         # Generate images on tensorboard and clear the session
-        utils.generate_images_tensorboard(gan, example_input, example_target, tf_summary, i)
+        utils.generate_images_tensorboard(
+            gan, example_input, example_target, tf_summary, i
+        )
         gc.collect()
         tf.keras.backend.clear_session()
         if lr_scheduler_d.stop:
@@ -123,7 +163,6 @@ def train(args: DictConfig):
     # Save the model
     gen = gan.generator
     gen.save(os.path.join("models", time_now, "generator.h5"))
-
 
 
 if __name__ == "__main__":
