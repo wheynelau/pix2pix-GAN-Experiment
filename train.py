@@ -25,7 +25,7 @@ def train(args: DictConfig):
     NUM_RUNS = args.train.runs
     EPOCHS = args.train.epochs
     DOWN_FACTOR = args.train.down_factor
-    utils = TFUtils(args.train.vgg, args.preprocess.preprocess_path)
+    utils = TFUtils(args.train.vgg, args.preprocess.preprocess_path, args.train.noise, args.train.noise_amount)
 
     # Create the generator and discriminator
     train_generator, validation_generator = utils.create_datagenerators(

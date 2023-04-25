@@ -1,0 +1,52 @@
+defaults:  
+  - _self_  
+  - override hydra/hydra_logging: disabled  
+  - override hydra/job_logging: disabled  
+
+train:
+  # verbose for training
+  verbose: 1
+  # number of epochs
+  epochs: 100
+  # number of steps per epoch
+  steps: 100
+  # rounds of epochs, for tensorboard and LR scheduler
+  runs: 10
+  # batch size
+  batch_size: 2
+  # learning rate for generator
+  learning_rate: 0.0002
+  # learning rate for discriminator = learning_rate * discriminator_factor
+  discriminator_factor: 2
+  # factor for LR scheduler
+  down_factor: 1
+  # beta1 for gen and disc
+  gen_beta1: 0.5
+  disc_beta1: 0.5
+  # image size
+  width: 256
+  height: 256
+  # whether to use vgg pretrained model
+  vgg: true
+  # continue training from a checkpoint
+  load: true
+  # generate noise, not very successful in experiments
+  noise: false
+  # noise amount, between 0< x <=1
+  noise_amount: 1
+preprocess:
+  data_path: ./data
+  preprocess_path: ./preprocess_no_mask
+  mask: false
+  cpu: true
+infer:
+  # default input and output folder
+  # input folder can contain multiple images
+  image_folder: ./input
+  output_folder: ./output-20230425-1625
+  # path linking to a folder containing a generator.h5
+  model_path: ./models/20230425-1625
+  # whether to use gpu or not
+  cpu: true
+  # concat images side by side for comparison
+  concat: true

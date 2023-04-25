@@ -5,16 +5,19 @@ import os
 
 class TFUtils:
 
-    def __init__(self, vgg:bool, preprocess_path:str):
+    def __init__(self, vgg:bool, preprocess_path:str, noise_flag:bool, noise_amount:float = 1):
         self.vgg = vgg
         self.preprocessor_path = preprocess_path
-
+        self.noise = noise_flag
+        if self.noise and (noise_amount <= 0 or noise_amount > 1):
+            raise ValueError("Noise amount must be 0<noise_amount<=1")
+        self.noise_amount = noise_amount
     def preprocessor(self,img):
             return img /255
     
     def preprocessor_train(self,img):
         img /= 255
-        noise = tf.random.normal(shape=tf.shape(img), mean=0.0, stddev=1.0, dtype=tf.float32) * 0.1 
+        noise = tf.random.normal(shape=tf.shape(img), mean=0.0, stddev=1.0, dtype=tf.float32) * self.noise_amount
         noisy_image = tf.clip_by_value(img + noise, 0.0, 1.0)
         return noisy_image
 
@@ -30,7 +33,7 @@ class TFUtils:
             horizontal_flip=True,
             vertical_flip=True,
             fill_mode="reflect",
-            preprocessing_function=self.preprocessor_train,
+            preprocessing_function=self.preprocessor_train if self.noise else self.preprocessor,
         )
         train_generator_image = train_datagen.flow_from_directory(
             os.path.join(self.preprocessor_path,"train"),
