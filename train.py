@@ -112,6 +112,7 @@ def train(args: DictConfig):
         except IndexError:
             print("No checkpoints found. Training from scratch")
             time_now = str(datetime.datetime.now().strftime("%Y%m%d-%H%M"))
+            log_dir = os.path.join("logs", time_now)
     else:
         time_now = str(datetime.datetime.now().strftime("%Y%m%d-%H%M"))
         log_dir = os.path.join("logs", time_now)
