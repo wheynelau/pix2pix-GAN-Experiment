@@ -42,11 +42,11 @@ Here are some of the samples, as mentioned, more experimentation needs to be car
 
 > Final run with VGG generator, VGG discriminator and perceptual loss, with mask
 
-<img src ="images/9_512-decay-gen.png" title='Run with VGG generator, VGG discriminator and perceptual loss with masks' width="50%">
+<img src ="images/9-512-decay-gen.png" title='Run with VGG generator, VGG discriminator and perceptual loss with masks' width="50%">
 
 > VGG Generator, VGG Discriminator, Perceptual loss, Mask, 512x512, Generator learning rate multiplied by 0.5 after early stop
 
-<img src ="images/9_512-increase-disc.png" title='Run with VGG generator, VGG discriminator and perceptual loss with masks' width="50%">
+<img src ="images/9-512-increase-disc.png" title='Run with VGG generator, VGG discriminator and perceptual loss with masks' width="50%">
 
 > VGG Generator, VGG Discriminator, Perceptual loss, Mask, 512x512, Discriminator learning rate multiplied by 1.1 after early stop
 
