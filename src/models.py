@@ -246,7 +246,7 @@ def _upsample(filters, size, apply_dropout=False):
     if apply_dropout:
         result.add(tf.keras.layers.Dropout(0.5))
 
-    result.add(tf.keras.layers.LeakyReLU())
+    result.add(tf.keras.layers.ReLU())
 
     return result
 
