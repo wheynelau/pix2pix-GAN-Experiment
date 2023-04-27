@@ -1,8 +1,12 @@
 # RESULTS
 
 # Table Of Contents
-- [UNET GAN pix2pix with VGG19 generator and discriminator](#unet-gan-pix2pix-with-vgg19-generator-and-discriminator)
+- [RESULTS](#results)
 - [Table Of Contents](#table-of-contents)
+  - [Visual results](#visual-results)
+  - [Samples with different architectures](#samples-with-different-architectures)
+  - [Losses](#losses)
+  - [Training method](#training-method)
 
 ## Visual results
 
@@ -43,6 +47,12 @@ The perceptual loss was given a weight of 0.5 and the lambda value for the l1 lo
 
 ## Training method
 
+Several methods were used to train the model:
+- Changing beta values
+- Increasing learning rate of discriminator instead of decreasing generator
+- Different run counts and batch sizes
+
+The final method used was:
 1. The model was trained for 5 runs with 100 epochs with a batch size of 1 for image sizes 512x512. This was with the generator vgg layers frozen to allow the other layers to learn first.
 2. After the losses have stabilised, the vgg layers were unfrozen and the model was trained for another 10 runs with 100 epochs.
 3. An EarlyStopping callback was set on the discriminator loss to prevent the generator from overpowering the discriminator.
