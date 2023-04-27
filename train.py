@@ -34,6 +34,19 @@ def train(args: DictConfig):
         args.train.noise_amount,
     )
 
+    # Override mode:
+    if args.train.interrupt_mode:
+        try:
+            with open('myfile.txt', "r") as f:
+                first_line = f.readline()
+            discriminator_learning = float(first_line)
+        except FileNotFoundError:
+            print("No file found, starting from config file")
+            discriminator_learning = args.train.learning_rate * args.train.discriminator_factor
+    else:
+        discriminator_learning = args.train.learning_rate * args.train.discriminator_factor
+
+
     # Create the generator and discriminator
     train_generator, validation_generator = utils.create_datagenerators(
         IMG_HEIGHT, IMG_WIDTH, BATCH_SIZE
@@ -50,7 +63,7 @@ def train(args: DictConfig):
         args.train.learning_rate, beta_1=args.train.gen_beta1
     )
     discriminator_optimizer = tf.keras.optimizers.Adam(
-        args.train.learning_rate * args.train.discriminator_factor,
+        discriminator_learning,
         beta_1=args.train.disc_beta1,
     )
 
@@ -97,7 +110,9 @@ def train(args: DictConfig):
     )
     print("New model will be saved to: ", ckpt_dir)
     checkpoint_prefix = ckpt_dir
-
+    if args.train.vgg_trainable:
+        for layer in gan.generator.layers:
+            layer.trainable = True
     ### CHECKPOINTS ###
     example_input, example_target = next(iter(validation_generator))
 
@@ -109,7 +124,7 @@ def train(args: DictConfig):
         save_weights_only=True,
     )
 
-    tf_summary = tf.summary.create_file_writer(os.path.join(log_dir, "images"))
+    # tf_summary = tf.summary.create_file_writer(os.path.join(log_dir, "images"))
 
     tensorboard_callback = tf.keras.callbacks.TensorBoard(
         log_dir=log_dir,
@@ -117,16 +132,16 @@ def train(args: DictConfig):
     )
 
     es_callback = tf.keras.callbacks.EarlyStopping(
-        monitor="g_loss",
+        monitor="d_loss",
         restore_best_weights=False,
         mode="min",
         baseline=100,
         verbose=1,
-        patience=100,
+        patience=50,
     )
 
     lr_scheduler_d = StepLearningRateOnEarlyStopping(
-        discriminator_optimizer, factor=DOWN_FACTOR, patience=10
+        discriminator_optimizer, factor=DOWN_FACTOR, patience=30, discriminator_save_path='myfile.txt'
     )
 
     #### TRAINING LOOP ####
@@ -151,18 +166,18 @@ def train(args: DictConfig):
             ],
         )
         # Generate images on tensorboard and clear the session
-        utils.generate_images_tensorboard(
-            gan, example_input, example_target, tf_summary, i
-        )
+        # utils.generate_images_tensorboard(
+        #    gan, example_input, example_target, tf_summary, i
+        #)
         gc.collect()
         tf.keras.backend.clear_session()
         if lr_scheduler_d.stop:
-            print("Early stopping after 10 runs of downfactor")
+            print("Early stopping after 30 runs of downfactor")
             break
 
-    # Save the model
-    gen = gan.generator
-    gen.save(os.path.join("models", time_now, "generator.h5"))
+        # Save the model
+        gen = gan.generator
+        gen.save(os.path.join("models", time_now, "generator.h5"))
 
 
 if __name__ == "__main__":
