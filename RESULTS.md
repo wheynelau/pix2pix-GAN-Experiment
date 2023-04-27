@@ -10,11 +10,15 @@
 
 ## Visual results
 
-1. The generator was able to generate rather realistic images however they were incomplete. They looked similar to incomplete paintings.
+Generator and discriminator from pix2pix
+1. The base generator was able to generate rather realistic images however they were incomplete. They looked similar to incomplete paintings.
 2. Despite not having colour information, the generator was able to generate images with similar colours to the original images.
   - This could mean that the generator was able to learn the colour information from the features
 3. The model was generating similar images but with unnecessary noise
    - More experimentation needs to be carried out -> moved into TODO
+
+VGG generator and discriminator
+1. The VGG pretrained model was able to generate fully images, however all the colours were the same. Placing a higher weight on L1 loss may help. 
 
 Here are some of the samples, as mentioned, more experimentation needs to be carried out to improve the results.
 
