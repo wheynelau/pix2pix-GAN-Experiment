@@ -16,13 +16,13 @@ class TerminateOnNaNOrInf(tf.keras.callbacks.Callback):
 
 
 class StepLearningRateOnEarlyStopping(tf.keras.callbacks.Callback):
-    def __init__(self, d_optimizer, factor=0.1, patience=5):
+    def __init__(self, d_optimizer, factor=0.1, patience=5, discriminator_save_path=None):
         super().__init__()
         self.d_optimizer = d_optimizer
         self.factor = factor
         self.patience = patience
         self.wait = 0
-
+        self.discriminator_save_path = discriminator_save_path
     def on_train_end(self, logs=None):
         # Early stopping changes the model.stop_training
         # This does not activate the callback when the model stops training due to epoch
@@ -32,6 +32,9 @@ class StepLearningRateOnEarlyStopping(tf.keras.callbacks.Callback):
             tf.keras.backend.set_value(self.d_optimizer.lr, new_d_lr)
             print(f"Learning rate stepped down. Discriminator LR: {new_d_lr}")
             self.wait += 1
+            if self.discriminator_save_path is not None:
+                with open(self.discriminator_save_path, "w") as f:
+                    f.write(f"{new_d_lr}")
 
     @property
     def stop(self):
@@ -243,7 +246,7 @@ def _upsample(filters, size, apply_dropout=False):
     if apply_dropout:
         result.add(tf.keras.layers.Dropout(0.5))
 
-    result.add(tf.keras.layers.ReLU())
+    result.add(tf.keras.layers.LeakyReLU())
 
     return result
 
@@ -305,8 +308,8 @@ def Generator():
 def Discriminator():
     initializer = tf.random_normal_initializer(0.0, 0.02)
 
-    inp = tf.keras.layers.Input(shape=[256, 256, 3], name="input_image")
-    tar = tf.keras.layers.Input(shape=[256, 256, 3], name="target_image")
+    inp = tf.keras.layers.Input(shape=[None, None, 3], name="input_image")
+    tar = tf.keras.layers.Input(shape=[None, None, 3], name="target_image")
 
     x = tf.keras.layers.concatenate([inp, tar])  # (batch_size, 256, 256, channels*2)
 
@@ -336,6 +339,20 @@ def Discriminator():
 
 class GAN(tf.keras.Model):
     def __init__(self, generator, discriminator, l1lambda=100, perceptual_weight=0.5):
+        """
+        Initialize the GAN model
+
+        Parameters
+        ----------
+        generator : 
+            Generator model
+        discriminator : _type_
+            Discriminator model
+        l1lambda : int, optional
+            l1 weight, by default 100
+        perceptual_weight : float, optional
+            perceptual loss weight, by default 0.5
+        """
         super().__init__()
         self.generator = generator
         self.discriminator = discriminator
