@@ -161,14 +161,17 @@ cython_debug/
 
 # Generated folders
 data*/
+image_out/
 preprocess*/
 logs/
 training_checkpoints/
 .vscode/
 input*/
 output*/
+models/2023*/
 settings.json
 src/__pycache__
 .pylintrc
 *.cmd
 *.zip
+*.txt
