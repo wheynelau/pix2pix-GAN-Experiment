@@ -17,9 +17,11 @@ train:
   # learning rate for generator
   learning_rate: 0.0002
   # learning rate for discriminator = learning_rate * discriminator_factor
-  discriminator_factor: 10
+  discriminator_factor: 1
+  # optimizer to step, can only be 'generator' or 'discriminator'
+  lr_optimizer: 'generator'
   # factor for LR scheduler, < 1 for decaying >1 for increasing
-  down_factor: 1.2
+  down_factor: 0.5
   # beta1 for gen and disc
   gen_beta1: 0.5
   disc_beta1: 0.7
@@ -55,11 +57,11 @@ infer:
   # default input and output folder
   # input folder can contain multiple images
   image_folder: ./input
-  output_folder: ./image_out/20230426-1656
+  output_folder: ./image_out/20230427-0716
   # path linking to a folder containing a generator.h5
-  model_path: ./models/20230426-1656
+  model_path: ./models/20230427-0716
   # infer using cpu instead of gpu
   cpu: false
   # concat images side by side for comparison
   concat: true
-  
+  size: 256

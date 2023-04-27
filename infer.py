@@ -35,7 +35,7 @@ def infer(args: DictConfig):
     for image in tqdm(images):
         input = Image.open(image)
         input = input.convert('RGB')
-        input = input.resize((512, 512), Image.BICUBIC)
+        input = input.resize((args.infer.size, args.infer.size), Image.BICUBIC)
         input = numpy.array(input)
         input_ = input / 255
         input_ = numpy.expand_dims(input_, axis=0)
