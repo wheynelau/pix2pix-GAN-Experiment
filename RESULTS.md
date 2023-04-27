@@ -7,6 +7,8 @@
   - [Samples with different architectures](#samples-with-different-architectures)
   - [Losses](#losses)
   - [Training method](#training-method)
+  - [Training times](#training-times)
+  - [Training notes](#training-notes)
 
 ## Visual results
 
@@ -19,6 +21,7 @@ Generator and discriminator from pix2pix
 
 VGG generator and discriminator
 1. The VGG pretrained model was able to generate fully images, however all the colours were the same. Placing a higher weight on L1 loss may help. 
+2. Increasing the image size to 512x512 introduced more white spaces, similar to the first run. 
 
 Here are some of the samples, as mentioned, more experimentation needs to be carried out to improve the results.
 
@@ -39,6 +42,14 @@ Here are some of the samples, as mentioned, more experimentation needs to be car
 
 > Final run with VGG generator, VGG discriminator and perceptual loss, with mask
 
+<img src ="images/9_512-decay-gen.png" title='Run with VGG generator, VGG discriminator and perceptual loss with masks' width="50%">
+
+> VGG Generator, VGG Discriminator, Perceptual loss, Mask, 512x512, Generator learning rate multiplied by 0.5 after early stop
+
+<img src ="images/9_512-increase-disc.png" title='Run with VGG generator, VGG discriminator and perceptual loss with masks' width="50%">
+
+> VGG Generator, VGG Discriminator, Perceptual loss, Mask, 512x512, Discriminator learning rate multiplied by 1.1 after early stop
+
 ## Losses
 
 __Perceptual loss:__
@@ -57,7 +68,19 @@ Several methods were used to train the model:
 - Different run counts and batch sizes
 
 The final method used was:
-1. The model was trained for 5 runs with 100 epochs with a batch size of 1 for image sizes 512x512. This was with the generator vgg layers frozen to allow the other layers to learn first.
+1. The model was trained for 5 runs with 100 epochs with a batch size of 1 for image sizes 512*512 and batch size of 4 for 256*256. This was with the generator vgg layers frozen to allow the other layers to learn first.
 2. After the losses have stabilised, the vgg layers were unfrozen and the model was trained for another 10 runs with 100 epochs.
 3. An EarlyStopping callback was set on the discriminator loss to prevent the generator from overpowering the discriminator.
 4. After the model encounters an early stop, the learning rate of the generator is reduced by 50%. This is allowed to happen for 10 times. 
+
+## Training times
+
+A spot instance was used to reduce cost, at the expense of possible termination. The instance was terminated 3 times during training, however the model was able to recover from the weights saved in the checkpoints. 
+
+The cloud GPU used was a single RTX 4090. Training times for 512x512 images was approximately 2 hours. The first hour was to allow the layers after the VGG layers to learn first. Thereafter, the VGG layers were unfrozen and the model was trained for another hour. 
+
+## Training notes
+
+- Further optimisation can be done to reduce training time, such as using a larger batch size. However it was recommended in the pix2pix paper to use a batch size of 1.
+- Better monitoring of training metrics should be utilised to reduce unnecessary training time. This is to determine the point of diminishing returns.
+
