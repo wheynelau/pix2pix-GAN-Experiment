@@ -56,12 +56,12 @@ preprocess:
 infer:
   # default input and output folder
   # input folder can contain multiple images
-  image_folder: ./input
-  output_folder: ./image_out/20230427-0716
+  image_folder: 
+  output_folder: 
   # path linking to a folder containing a generator.h5
-  model_path: ./models/20230427-0716
+  model_path: 
   # infer using cpu instead of gpu
   cpu: false
   # concat images side by side for comparison
   concat: true
-  size: 256
+  size: 512
