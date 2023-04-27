@@ -76,11 +76,10 @@ class TFUtils:
         )
 
         # Zip the image and mask generators
-        train_generator = tf.data.Dataset.zip((tf.data.Dataset.from_generator(lambda: train_generator_image, output_types=tf.float32, output_shapes=[None, 256, 256, 3]),
-                                        tf.data.Dataset.from_generator(lambda: train_generator_mask, output_types=tf.float32, output_shapes=[None, 256, 256, 3])))
+        train_generator = zip(train_generator_image, train_generator_mask)
         validation_generator = zip(validation_generator_images, validation_generator_masks)
 
-        return train_generator.cache(), validation_generator
+        return train_generator, validation_generator
 
     @staticmethod
     def generate_images(model, test_input, tar):
