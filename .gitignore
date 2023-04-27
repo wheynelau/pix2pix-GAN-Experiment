@@ -168,7 +168,7 @@ training_checkpoints/
 .vscode/
 input*/
 output*/
-models/2023*/
+models/*/
 settings.json
 src/__pycache__
 .pylintrc
