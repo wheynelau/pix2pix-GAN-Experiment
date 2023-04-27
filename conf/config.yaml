@@ -11,18 +11,18 @@ train:
   # number of steps per epoch
   steps: 100
   # rounds of epochs, for tensorboard and LR scheduler
-  runs: 10
+  runs: 20
   # batch size
-  batch_size: 2
+  batch_size: 1
   # learning rate for generator
   learning_rate: 0.0002
   # learning rate for discriminator = learning_rate * discriminator_factor
-  discriminator_factor: 1.5
-  # factor for LR scheduler
-  down_factor: 1
+  discriminator_factor: 10
+  # factor for LR scheduler, < 1 for decaying >1 for increasing
+  down_factor: 1.2
   # beta1 for gen and disc
   gen_beta1: 0.5
-  disc_beta1: 0.5
+  disc_beta1: 0.7
   # image size
   width: 256
   height: 256
@@ -30,31 +30,36 @@ train:
   # weight for L1 loss
   l1lambda: 100
   # weight for perceptual loss
-  perceptual_weight: 0.05
+  perceptual_weight: 0.5
   # whether to use vgg pretrained model
   vgg: true
+  # generator only
+  vgg_trainable: true
   # continue training from a checkpoint
   load: true
   # generate noise, not very successful in experiments
   noise: false
   # noise amount, between 0< x <=1
   noise_amount: 1
+  # interruptable mode
+  interrupt_mode: false
 preprocess:
   # default input and output folder
   data_path: ./data
-  preprocess_path: ./preprocess_no_mask
+  preprocess_path: ./preprocessed
   # whether to use mask layer
-  mask: false
+  mask: true
   # preprocess using cpu instead of gpu
   cpu: true
 infer:
   # default input and output folder
   # input folder can contain multiple images
   image_folder: ./input
-  output_folder: ./output-20230425-1625
+  output_folder: ./image_out/20230426-1656
   # path linking to a folder containing a generator.h5
-  model_path: ./models/20230425-1625
+  model_path: ./models/20230426-1656
   # infer using cpu instead of gpu
-  cpu: true
+  cpu: false
   # concat images side by side for comparison
   concat: true
+  
