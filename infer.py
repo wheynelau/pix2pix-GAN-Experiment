@@ -1,12 +1,10 @@
 from src.models import Generator, VGG19Generator
-import argparse
 from PIL import Image
 import os
 import numpy
 from tqdm import tqdm
-import sys
 import hydra
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def infer(args: DictConfig):
@@ -37,7 +35,7 @@ def infer(args: DictConfig):
     for image in tqdm(images):
         input = Image.open(image)
         input = input.convert('RGB')
-        input = input.resize((256, 256), Image.BICUBIC)
+        input = input.resize((512, 512), Image.BICUBIC)
         input = numpy.array(input)
         input_ = input / 255
         input_ = numpy.expand_dims(input_, axis=0)
