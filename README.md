@@ -8,7 +8,7 @@
 - [Getting started](#getting-started)
   - [Training](#training)
   - [Inferencing](#inferencing)
-- [Results](#results)
+  - [Results](#results)
   - [Problems](#problems)
   - [Learning points](#learning-points)
   - [Future enhancements / TODO](#future-enhancements--todo)
@@ -115,39 +115,9 @@ Run the below command to infer on a folder containing images:
 $ python infer.py
 
 ```
-# Results
+## [Results](RESULTS.md)
 
-1. The generator was able to generate rather realistic images however they were incomplete. They looked similar to incomplete paintings.
-2. Despite not having colour information, the generator was able to generate images with similar colours to the original images.
-  - This could mean that the generator was able to learn the colour information from the features
-3. The model was generating similar images but with unnecessary noise
-   - More experimentation needs to be carried out -> moved into TODO
-
-Here are some of the samples, as mentioned, more experimentation needs to be carried out to improve the results.
-
-<img src ="images/9.png" title='Initial run with the original pix2pix architecture' alt width="50%">
-
-> Initial run with the original pix2pix architecture
-
-<img src ="images/9_percep.png" title='Run with VGG generator, default discriminator and perceptual loss' width="50%">
-
-> Run with VGG generator, default discriminator and perceptual loss
-
-<img src ="images/9_vgg.png" title='Run with VGG generator, VGG discriminator and perceptual loss without masks' width="50%">
-
-> Run with VGG generator, VGG discriminator and perceptual loss, without mask
-
-<img src ="images/9_no_mask.png" title='Run with VGG generator, VGG discriminator and perceptual loss with masks' width="50%">
-
-> Final run with VGG generator, VGG discriminator and perceptual loss, with mask
-
-Further details on the perceptual loss:
-
-The VGG features are from the first 3 conv outputs before the max pool layers.
-
-Thereafter, the mean squared error is calculated between the features of the original image and the generated image.
-
-The perceptual loss was given a weight of 0.5 and the lambda value for the l1 loss function was set to 100.
+_Results are in the RESULTS.md file_
 
 ## Problems
 1. Successfully implemented VGG models as the generator and discriminator, however the model was not able to learn the features of the original images very well. 
