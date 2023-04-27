@@ -8,10 +8,9 @@
 - [Getting started](#getting-started)
   - [Training](#training)
   - [Inferencing](#inferencing)
-  - [Results](#results)
-  - [Problems](#problems)
+- [Results](#results)
   - [Takeaways](#takeaways)
-  - [Problems](#problems-1)
+  - [Problems](#problems)
   - [Future enhancements / TODO](#future-enhancements--todo)
 - [Contributing](#contributing)
 - [Sources](#sources)
@@ -116,12 +115,9 @@ Run the below command to infer on a folder containing images:
 $ python infer.py
 
 ```
-## [Results](RESULTS.md)
+# [Results](RESULTS.md)
 
 _Results are in the RESULTS.md file_
-
-## Problems
-1. Successfully implemented VGG models as the generator and discriminator, however the model was not able to learn the features of the original images very well. 
 
 ## Takeaways
 1. Implemented a GAN model from scratch in tensorflow.
