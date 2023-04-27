@@ -58,8 +58,7 @@ infer:
   # input folder can contain multiple images
   image_folder: 
   output_folder: 
-  # path linking to a folder containing a generator.h5
-  model_path: 
+  # path linking to a model
   # infer using cpu instead of gpu
   cpu: false
   # concat images side by side for comparison

@@ -19,7 +19,7 @@ def infer(args: DictConfig):
         os.makedirs(args.infer.output_folder, exist_ok=True)
 
     try:
-        model_path = os.path.join(args.infer.model_path, 'generator.h5')
+        model_path = args.infer.model_path
     except Exception as e:
         print("Model path does not exist.")
         exit()
