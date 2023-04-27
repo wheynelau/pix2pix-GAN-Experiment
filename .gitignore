@@ -175,3 +175,4 @@ src/__pycache__
 *.cmd
 *.zip
 *.txt
+*.ipynb
