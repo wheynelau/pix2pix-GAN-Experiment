@@ -32,7 +32,14 @@ python=3.10
 tensorflow=2.9.3
 cudatoolkit=11.2
 cudnn=8.1
+```
 
+Have checked that this works on docker:
+
+```Dockerfile
+FROM tensorflow/tensorflow:2.9.3-gpu
+
+RUN pip install hydra-core tqdm scipy matplotlib
 ```
 
 A conda environment file will be provided in the root directory of this repository. It was only tested on a windows machine.
@@ -113,8 +120,8 @@ $ python infer.py
 1. The generator was able to generate rather realistic images however they were incomplete. They looked similar to incomplete paintings.
 2. Despite not having colour information, the generator was able to generate images with similar colours to the original images.
   - This could mean that the generator was able to learn the colour information from the features
-3. The model could not learn the features of the original images even after adding perception loss
-   - More experimentation needs to be carried over -> moved into TODO
+3. The model was generating similar images but with unnecessary noise
+   - More experimentation needs to be carried out -> moved into TODO
 
 Here are some of the samples, as mentioned, more experimentation needs to be carried out to improve the results.
 
@@ -126,9 +133,13 @@ Here are some of the samples, as mentioned, more experimentation needs to be car
 
 > Run with VGG generator, default discriminator and perceptual loss
 
-<img src ="images/9_vgg.png" title='Run with VGG generator, VGG discriminator and perceptual loss' width="50%">
+<img src ="images/9_vgg.png" title='Run with VGG generator, VGG discriminator and perceptual loss without masks' width="50%">
 
-> Run with VGG generator, VGG discriminator and perceptual loss
+> Run with VGG generator, VGG discriminator and perceptual loss, without mask
+
+<img src ="images/9_no_mask.png" title='Run with VGG generator, VGG discriminator and perceptual loss with masks' width="50%">
+
+> Final run with VGG generator, VGG discriminator and perceptual loss, with mask
 
 Further details on the perceptual loss:
 
