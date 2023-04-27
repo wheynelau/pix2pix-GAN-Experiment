@@ -18,15 +18,17 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def train(args: DictConfig):
-    # The batch size of 1 produced better results for the U-Net in the original pix2pix experiment
+    # Assign the arguments
     BATCH_SIZE = args.train.batch_size
-    # Each image is 256x256 in size
     IMG_WIDTH = args.train.width
     IMG_HEIGHT = args.train.height
     STEPS = args.train.steps
     NUM_RUNS = args.train.runs
     EPOCHS = args.train.epochs
     DOWN_FACTOR = args.train.down_factor
+
+    # Create the utils object
+
     utils = TFUtils(
         args.train.vgg,
         args.preprocess.preprocess_path,
@@ -34,8 +36,8 @@ def train(args: DictConfig):
         args.train.noise_amount,
     )
 
-    # Override mode:
-# Override mode:
+    # Interrupt mode: if the training is interrupted, the learning rate will be loaded from the previous learning rate
+    # and the training will continue from the last checkpoint
     if args.train.interrupt_mode and args.train.lr_optimizer == 'discriminator':
         try:
             with open('myfile.txt', "r") as f:
@@ -59,10 +61,13 @@ def train(args: DictConfig):
     else:
         generator_learning = args.train.learning_rate
         discriminator_learning = args.train.learning_rate * args.train.discriminator_factor
-    # Create the generator and discriminator
+
+    # Create the dataset
     train_generator, validation_generator = utils.create_datagenerators(
         IMG_HEIGHT, IMG_WIDTH, BATCH_SIZE
     )
+
+    # Create the generator and discriminator
     if args.train.vgg:
         generator = VGG19Generator()
         discriminator = VGG19Discriminator()
@@ -79,7 +84,7 @@ def train(args: DictConfig):
         beta_1=args.train.disc_beta1,
     )
     
-
+    # Create the GAN
     loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)
     gan = GAN(
         generator=generator,
@@ -87,15 +92,17 @@ def train(args: DictConfig):
         l1lambda=args.train.l1lambda,
         perceptual_weight= args.train.perceptual_weight,
     )
+    # Compile the GAN
     gan.compile(
         g_optimizer=generator_optimizer,
         d_optimizer=discriminator_optimizer,
         loss_fn=loss_object,
     )
-
+    # Creating the logs and checkpoints directories
     os.makedirs("logs", exist_ok=True)
     os.makedirs("training_checkpoints", exist_ok=True)
-    # Create the checkpoint directory
+
+    # Loading the checkpoints and logs
     if args.train.load:
         try:
             # load the model from the latest checkpoint
@@ -117,6 +124,8 @@ def train(args: DictConfig):
         time_now = str(datetime.datetime.now().strftime("%Y%m%d-%H%M"))
         log_dir = os.path.join("logs", time_now)
 
+    # A new checkpoint has to be created for each run
+
     ckpt_dir = os.path.join(
         "./training_checkpoints",
         str(datetime.datetime.now().strftime("%Y%m%d-%H%M")),
@@ -124,9 +133,13 @@ def train(args: DictConfig):
     )
     print("New model will be saved to: ", ckpt_dir)
     checkpoint_prefix = ckpt_dir
+
+    # Set the vgg layers to trainable or not
+
     if args.train.vgg_trainable:
         for layer in gan.generator.layers:
             layer.trainable = True
+
     ### CHECKPOINTS ###
     example_input, example_target = next(iter(validation_generator))
 
@@ -138,6 +151,7 @@ def train(args: DictConfig):
         save_weights_only=True,
     )
 
+    # Uncomment this to save the images to tensorboard
     # tf_summary = tf.summary.create_file_writer(os.path.join(log_dir, "images"))
 
     tensorboard_callback = tf.keras.callbacks.TensorBoard(
@@ -156,7 +170,7 @@ def train(args: DictConfig):
 
     lr_scheduler_d = StepLearningRateOnEarlyStopping(
         discriminator_optimizer if args.train.lr_optimizer.lower() == "discriminator" else generator_optimizer,
-        factor=DOWN_FACTOR, patience=30, discriminator_save_path='myfile.txt'
+        factor=DOWN_FACTOR, patience=30, discriminator_save_path='optimiser.txt'
     )
 
     #### TRAINING LOOP ####
@@ -180,6 +194,7 @@ def train(args: DictConfig):
                 # terminate
             ],
         )
+        # Uncomment this to save the images to tensorboard
         # Generate images on tensorboard and clear the session
         # utils.generate_images_tensorboard(
         #    gan, example_input, example_target, tf_summary, i
