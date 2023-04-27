@@ -13,6 +13,8 @@ dependencies:
   - cudnn=8.1
   - numba
   - pillow
+  - pip
   - pip:
       - tensorflow-gpu==2.9.3
       - hydra-core
+      - tqdm
