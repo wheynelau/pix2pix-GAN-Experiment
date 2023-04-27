@@ -122,7 +122,7 @@ _Results are in the RESULTS.md file_
 ## Problems
 1. Successfully implemented VGG models as the generator and discriminator, however the model was not able to learn the features of the original images very well. 
 
-## Learning points
+## Takeaways
 1. GANs are hard to train
 2. It is difficult to tune the learning rates for the generator and discriminator
 3. Successfully implemented custom callbacks for Tensorboard and checkpointing
