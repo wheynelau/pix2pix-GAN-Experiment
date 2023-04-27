@@ -35,7 +35,8 @@ def train(args: DictConfig):
     )
 
     # Override mode:
-    if args.train.interrupt_mode:
+# Override mode:
+    if args.train.interrupt_mode and args.train.lr_optimizer == 'discriminator':
         try:
             with open('myfile.txt', "r") as f:
                 first_line = f.readline()
@@ -43,10 +44,21 @@ def train(args: DictConfig):
         except FileNotFoundError:
             print("No file found, starting from config file")
             discriminator_learning = args.train.learning_rate * args.train.discriminator_factor
+        finally:
+            generator_learning = args.train.learning_rate
+    elif args.train.interrupt_mode and args.train.lr_optimizer == 'generator':
+        try:
+            with open('myfile.txt', "r") as f:
+                first_line = f.readline()
+            generator_learning = float(first_line)
+        except FileNotFoundError:
+            print("No file found, starting from config file")
+            generator_learning = args.train.learning_rate
+        finally:
+            discriminator_learning = args.train.learning_rate * args.train.discriminator_factor
     else:
+        generator_learning = args.train.learning_rate
         discriminator_learning = args.train.learning_rate * args.train.discriminator_factor
-
-
     # Create the generator and discriminator
     train_generator, validation_generator = utils.create_datagenerators(
         IMG_HEIGHT, IMG_WIDTH, BATCH_SIZE
@@ -60,12 +72,13 @@ def train(args: DictConfig):
 
     # Create the optimizers
     generator_optimizer = tf.keras.optimizers.Adam(
-        args.train.learning_rate, beta_1=args.train.gen_beta1
+        generator_learning, beta_1=args.train.gen_beta1
     )
     discriminator_optimizer = tf.keras.optimizers.Adam(
         discriminator_learning,
         beta_1=args.train.disc_beta1,
     )
+    
 
     loss_object = tf.keras.losses.BinaryCrossentropy(from_logits=True)
     gan = GAN(
@@ -141,7 +154,8 @@ def train(args: DictConfig):
     )
 
     lr_scheduler_d = StepLearningRateOnEarlyStopping(
-        discriminator_optimizer, factor=DOWN_FACTOR, patience=30, discriminator_save_path='myfile.txt'
+        discriminator_optimizer if args.train.lr_optimizer.lower() == "discriminator" else generator_optimizer,
+        factor=DOWN_FACTOR, patience=30, discriminator_save_path='myfile.txt'
     )
 
     #### TRAINING LOOP ####

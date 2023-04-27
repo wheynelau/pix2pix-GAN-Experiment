@@ -16,25 +16,32 @@ class TerminateOnNaNOrInf(tf.keras.callbacks.Callback):
 
 
 class StepLearningRateOnEarlyStopping(tf.keras.callbacks.Callback):
-    def __init__(self, d_optimizer, factor=0.1, patience=5, discriminator_save_path=None):
+    def __init__(
+        self,
+        optimizer: tf.keras.optimizers.Optimizer = None,
+        factor:float=1,
+        patience:int=5,
+        discriminator_save_path=None,
+    ):
         super().__init__()
-        self.d_optimizer = d_optimizer
+        self.optimizer = optimizer
         self.factor = factor
         self.patience = patience
         self.wait = 0
         self.discriminator_save_path = discriminator_save_path
+
     def on_train_end(self, logs=None):
         # Early stopping changes the model.stop_training
         # This does not activate the callback when the model stops training due to epoch
         if self.model.stop_training:
-            d_lr = self.d_optimizer.lr.numpy()
-            new_d_lr = d_lr * self.factor
-            tf.keras.backend.set_value(self.d_optimizer.lr, new_d_lr)
-            print(f"Learning rate stepped down. Discriminator LR: {new_d_lr}")
+            lr = self.optimizer.lr.numpy()
+            new_lr = lr * self.factor
+            tf.keras.backend.set_value(self.optimizer.lr, lr)
+            print(f"Learning rate changed. New LR: {new_lr}")
             self.wait += 1
             if self.discriminator_save_path is not None:
                 with open(self.discriminator_save_path, "w") as f:
-                    f.write(f"{new_d_lr}")
+                    f.write(f"{new_lr}")
 
     @property
     def stop(self):
@@ -344,7 +351,7 @@ class GAN(tf.keras.Model):
 
         Parameters
         ----------
-        generator : 
+        generator :
             Generator model
         discriminator : _type_
             Discriminator model
@@ -378,7 +385,8 @@ class GAN(tf.keras.Model):
         vgg = tf.keras.applications.VGG19(include_top=False, weights="imagenet")
         vgg.trainable = False
         outputs = [
-            vgg.get_layer(name).output for name in ["block1_conv2", "block2_conv2", "block3_conv4"]
+            vgg.get_layer(name).output
+            for name in ["block1_conv2", "block2_conv2", "block3_conv4"]
         ]
         model = tf.keras.Model([vgg.input], outputs)
         return model
