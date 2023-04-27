@@ -10,7 +10,8 @@
   - [Inferencing](#inferencing)
   - [Results](#results)
   - [Problems](#problems)
-  - [Learning points](#learning-points)
+  - [Takeaways](#takeaways)
+  - [Problems](#problems-1)
   - [Future enhancements / TODO](#future-enhancements--todo)
 - [Contributing](#contributing)
 - [Sources](#sources)
@@ -45,7 +46,7 @@ RUN pip install hydra-core tqdm scipy matplotlib
 A conda environment file will be provided in the root directory of this repository. It was only tested on a windows machine.
 
 # Getting started
-If you want to use this project, follow these steps:
+If you would like to use this project, follow these steps:
 
 1. Clone this repository
 
@@ -79,14 +80,14 @@ python src/preprocess.py
 │   └───train
 ```
 
-Running the 'preprocess.py' file will create a new directory called 'preprocessed' and split the images into two images. It assumes that the images in the mask and test/train are the same names. This is how it would appear after running the 'preprocess.py' file:
+Running the 'preprocess.py' file will create a new directory based on the preprocess_path in the configuration and split the images into two images. It assumes that the images in the mask and test/train are the same names. This is how it would appear after running the 'preprocess.py' file:
 
 ```bash
 $ python src/preprocess.py
 ```
 
 ```bash
-├───preprocessed
+├───$preprocess_path
 │   ├───test
 │   │   ├───image
 │   │   └───target
@@ -123,19 +124,23 @@ _Results are in the RESULTS.md file_
 1. Successfully implemented VGG models as the generator and discriminator, however the model was not able to learn the features of the original images very well. 
 
 ## Takeaways
-1. GANs are hard to train
-2. It is difficult to tune the learning rates for the generator and discriminator
-3. Successfully implemented custom callbacks for Tensorboard and checkpointing
-4. Created a callback to adjust the learning rate of the generator and discriminator
+1. Implemented a GAN model from scratch in tensorflow.
+2. Used pretrained models as the generator and discriminator.
+3. Improved the training pipeline by method overridding the compile and train_step method.
+4. Custom callbacks for Tensorboard, checkpointing and optimiser learning rate scheduling.
+
+## Problems
+1. GANs are hard to train, especially when the generator and discriminator are not balanced.
+2. Encountered mode collapse, where the generator generated almost the same image for all the images in the dataset.
+3. Difficult to achieve equilibrium between the generator and discriminator.
 ## Future enhancements / TODO
 
-1. Implement a mix of pretrained models for the discriminator and generator
-   - Using VGG for generator and using a custom discriminator vice versa
-   - UPDATE: Implemented VGG for generator and discriminator
-2. Experiment with different lambda values for the loss function
-   - Hypothesis: Generate images that are realistic but not similar to the original images
-3. Explore other loss functions 
-
+1. Explore other loss functions
+2. Introduce noise to the input images
+3. Use cGAN instead of GAN
+4. Implement pytorch version of the model
+5. Step discriminator less than generator
+6. Experiment if cycleGAN works better. 
 # Contributing
 
 Feedback and contributions are welcome. As this is a learning project, I may not be active in maintaining this repository and accepting pull requests. 
