@@ -27,7 +27,7 @@ VGG generator and discriminator
 
 Here are some of the samples, as mentioned, more experimentation needs to be carried out to improve the results.
 
-<img src ="images/9.png" title='Initial run with the original pix2pix architecture' alt width="50%">
+<img src ="images/9.png" title='Initial run with the original pix2pix architecture' width="50%">
 
 > Initial run with the original pix2pix architecture
 
@@ -85,3 +85,9 @@ The cloud GPU used was a single RTX 4090. Training times for 512x512 images was 
 - Further optimisation can be done to reduce training time, such as using a larger batch size. However it was recommended in the pix2pix paper to use a batch size of 1.
 - Better monitoring of training metrics should be utilised to reduce unnecessary training time. This is to determine the point of diminishing returns.
 - Understand the architecture of the generator and discriminator better to improve the model.
+
+Generative - Having the power or function of generating, originating, producing, or reproducing.
+Adversarial (Adversary) - One that contends with, opposes, or resists: an enemy or opponent.
+Net (Network) - a computer architecture in which a number of processors are interconnected in a manner suggestive of the connections between neurons in a human brain and which is able to learn by a process of trial and error.
+
+In summary, 
